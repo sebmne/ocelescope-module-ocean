@@ -1,0 +1,33 @@
+{
+	"name": "@instance/app",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "next dev",
+		"build": "next build",
+		"start": "next start",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@instance/ocean-module": "workspace:*",
+		"@ocelescope/core": "catalog:",
+		"@ocelescope/management": "catalog:",
+		"@mantine/core": "catalog:",
+		"@mantine/dates": "catalog:",
+		"@mantine/charts": "catalog:",
+		"@mantine/dropzone": "catalog:",
+		"@mantine/notifications": "catalog:",
+		"mantine-datatable": "catalog:",
+		"@xyflow/react": "catalog:",
+		"next": "catalog:",
+		"react": "catalog:",
+		"react-dom": "catalog:"
+	},
+	"devDependencies": {
+		"@types/node": "^25.0.3",
+		"@types/react": "catalog:",
+		"@types/react-dom": "catalog:",
+		"typescript": "catalog:"
+	}
+}

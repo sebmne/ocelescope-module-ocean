@@ -1,0 +1,18 @@
+[project]
+name = "ocelescope-module-example"
+version = "0.1.0"
+description = "An example Ocelescope backend module"
+requires-python = ">=3.11"
+dependencies = [
+  "ocelescope-backend>=0.6.0",
+]
+
+[project.entry-points."ocelescope_backend.modules"]
+example = "ocelescope_module_example.module:Example"
+
+[build-system]
+requires = ["uv_build>=0.11.20,<0.12.0"]
+build-backend = "uv_build"
+
+[tool.uv]
+package = true

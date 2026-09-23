@@ -1,0 +1,48 @@
+packages:
+  - app
+  - frontend-modules/*
+# This template intentionally installs freshly-published @ocelescope packages,
+# so it opts out of pnpm's minimum-release-age cooldown. Remove this line if you
+# prefer to wait out your global cooldown for newly published dependencies.
+minimumReleaseAge: 0
+allowBuilds:
+  core-js: true
+  es5-ext: true
+  esbuild: true
+  sharp: true
+
+# Single source of truth for shared dependency versions. Packages reference
+# these with `"<name>": "catalog:"`, so bumping Ocelescope (or React, Mantine,
+# ...) is a one-line change here. The app and every module MUST resolve the
+# same React, Mantine and @ocelescope/core; two copies break hooks at runtime.
+catalog:
+  # Ocelescope
+  "@ocelescope/api-base": ^0.8.0
+  "@ocelescope/api-client": ^0.8.0
+  "@ocelescope/api-config": ^0.8.0
+  "@ocelescope/core": ^0.8.0
+  "@ocelescope/management": ^0.8.0
+  # UI
+  "@mantine/core": ^9.6.2
+  "@mantine/hooks": ^9.6.2
+  "@mantine/dates": ^9.6.2
+  "@mantine/charts": ^9.6.2
+  "@mantine/dropzone": ^9.6.2
+  "@mantine/notifications": ^9.6.2
+  mantine-datatable: ^9.4.0
+  "@xyflow/react": ^12.10.1
+  "@r4pm/components": ^0.3.2
+  lucide-react: ^1.47.0
+  "@lucide/lab": ^0.7.0
+  # React & data fetching
+  next: ^16.3.2
+  react: ^19.3.0
+  react-dom: ^19.3.0
+  "@types/react": ^19.3.0
+  "@types/react-dom": ^19.2.3
+  "@tanstack/react-query": ^5.103.2
+  axios: ^1.20.0
+  # Tooling
+  orval: ^8.36.0
+  tsdown: ^0.22.14
+  typescript: ^5.9.3
