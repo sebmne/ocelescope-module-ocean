@@ -3,8 +3,7 @@ import { useOcelId } from "./internal/useOcelId";
 import { NamePicker, type NamePickerProps } from "./NamePicker";
 import type { OcelSource, Selection } from "./types";
 
-export type ActivityPickerProps = OcelSource &
-  Omit<NamePickerProps, "items" | "scope" | "loading">;
+export type ActivityPickerProps = OcelSource & Omit<NamePickerProps, "items" | "scope" | "loading">;
 
 /** The log's activities, by how often they occur. */
 export const ActivityPicker = ({
@@ -19,12 +18,5 @@ export const ActivityPicker = ({
     { query: { enabled: id != null } },
   );
 
-  return (
-    <NamePicker
-      items={data ?? {}}
-      scope="activity"
-      loading={isPending}
-      {...picker}
-    />
-  );
+  return <NamePicker items={data ?? {}} scope="activity" loading={isPending} {...picker} />;
 };

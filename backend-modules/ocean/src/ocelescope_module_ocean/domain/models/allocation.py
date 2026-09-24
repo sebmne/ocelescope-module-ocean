@@ -43,6 +43,8 @@ class ObjectEmissions:
     ocel:oid, ocel:type, OBJECT_EMISSIONS_KG.
     """
 
+    # How the emissions were allocated.
+    config: AllocationConfig
     per_object: pl.DataFrame
     steps: AllocationSteps
     total_kg: float
@@ -59,6 +61,7 @@ class HistogramBin:
 class AllocationSummary:
     """What an allocation looks like at a glance: totals and how they spread."""
 
+    config: AllocationConfig
     total_kg: float
     target_objects: int
     steps: AllocationSteps

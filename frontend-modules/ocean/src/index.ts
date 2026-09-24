@@ -1,18 +1,20 @@
 import { defineModule, defineModuleRoute } from "@ocelescope/core";
 import WaveIcon from "./assets/WaveIcon";
-import Emissions from "./routes/Emissions";
+import EmissionsPage from "./routes/EmissionsPage";
 
+// The module's table of contents: every page, and how it appears in the navigation.
 export default defineModule({
   name: "ocean",
-  label: "OCEAN",
-  description: "Object-centric emission analysis: assign emissions to events and allocate them to objects.",
+  label: "OCEAn",
+  description:
+    "Object-centric emission analysis: assign emissions to events and allocate them to objects. Adapted from works by Raimund Hensen.",
   authors: [{ name: "Menne, Sebastian" }],
   routes: [
     defineModuleRoute({
       name: "emissions",
       label: "Emissions",
       requiresOcel: true,
-      component: Emissions,
+      component: EmissionsPage,
     }),
   ],
   icon: WaveIcon,

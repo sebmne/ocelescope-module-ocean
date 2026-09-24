@@ -3,6 +3,7 @@ from typing import Annotated, Literal
 from fastapi import APIRouter, Depends
 from pydantic import Field
 
+from ocelescope_module_ocean.api.attribute_refs import AttributeRefModel
 from ocelescope_module_ocean.api.dependencies import get_compute_emissions, get_emissions_overview
 from ocelescope_module_ocean.api.schema import ApiModel
 from ocelescope_module_ocean.application.use_cases.compute_emissions import (
@@ -13,7 +14,6 @@ from ocelescope_module_ocean.application.use_cases.get_emissions_overview import
     GetEmissionsOverview,
     GetEmissionsOverviewCommand,
 )
-from ocelescope_module_ocean.domain.models.attributes import EventAttribute, ObjectAttribute
 from ocelescope_module_ocean.domain.models.emission_factor import EmissionFactor
 from ocelescope_module_ocean.domain.models.emission_rules import E2OEmissionRule, EventEmissionRule
 from ocelescope_module_ocean.domain.models.emissions import EmissionsOverview
@@ -24,31 +24,9 @@ router = APIRouter(tags=["Emissions"])
 # ---- Request models ----------------------------------------------------------
 
 
-class EventAttributeRef(ApiModel):
-    target: Literal["event"]
-    name: str
-
-    def to_domain(self) -> EventAttribute:
-        return EventAttribute(name=self.name)
-
-
-class ObjectAttributeRef(ApiModel):
-    target: Literal["object"]
-    object_type: str
-    name: str
-    qualifier: str | None = None
-
-    def to_domain(self) -> ObjectAttribute:
-        return ObjectAttribute(
-            object_type=self.object_type, name=self.name, qualifier=self.qualifier
-        )
-
-
 class EmissionFactorRequest(ApiModel):
     value_kg: float
-    attributes: list[
-        Annotated[EventAttributeRef | ObjectAttributeRef, Field(discriminator="target")]
-    ] = []
+    attributes: list[AttributeRefModel] = []
 
     def to_domain(self) -> EmissionFactor:
         return EmissionFactor(

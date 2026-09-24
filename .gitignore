@@ -16,3 +16,7 @@ app/next-env.d.ts
 # Generated API clients (run `pnpm run build:modules` to regenerate)
 frontend-modules/*/openapi.json
 frontend-modules/*/src/api/
+
+.import_linter_cache/
+.ruff_cache/
+tsconfig.tsbuildinfo

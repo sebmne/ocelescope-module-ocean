@@ -8,8 +8,8 @@ from ocelescope import OCEL
 from ocelescope_module_ocean.domain.exceptions import InvalidEmissionRuleError, RuleProblem
 from ocelescope_module_ocean.domain.models.attributes import (
     AttributeRef,
-    EventAttribute,
-    ObjectAttribute,
+    EventAttributeRef,
+    ObjectAttributeRef,
 )
 from ocelescope_module_ocean.domain.models.emission_rules import (
     E2OEmissionRule,
@@ -106,7 +106,7 @@ def _apply_e2o_rule(rule: E2OEmissionRule, ocel: OCEL) -> pl.DataFrame:
     def is_own(attribute: AttributeRef) -> bool:
         """An attribute of the relation's own object."""
         return (
-            isinstance(attribute, ObjectAttribute)
+            isinstance(attribute, ObjectAttributeRef)
             and attribute.object_type == rule.object_type
             and attribute.qualifier in (None, rule.qualifier)
         )
@@ -119,7 +119,7 @@ def _apply_e2o_rule(rule: E2OEmissionRule, ocel: OCEL) -> pl.DataFrame:
         raise RuleProblem(_no_relations(rule.activity, rule.object_type, rule.qualifier))
 
     # Attributes of each relation's own object, at the event's time.
-    own_names = [a.name for a in own if isinstance(a, ObjectAttribute)]
+    own_names = [a.name for a in own if isinstance(a, ObjectAttributeRef)]
     _check_object_attributes(ocel, own_names)
     if own_names:
         relations = object_values_at_events(ocel, relations, rule.object_type, own_names)
@@ -159,8 +159,8 @@ def _event_level_values(
     Returns the frame (ocel:eid, ocel:timestamp, value columns) and the value
     columns' names.
     """
-    event_attributes = [a for a in attributes if isinstance(a, EventAttribute)]
-    object_attributes = [a for a in attributes if isinstance(a, ObjectAttribute)]
+    event_attributes = [a for a in attributes if isinstance(a, EventAttributeRef)]
+    object_attributes = [a for a in attributes if isinstance(a, ObjectAttributeRef)]
 
     _check_event_attributes(ocel, activity, event_attributes)
     events = events_of(ocel, activity, [a.name for a in event_attributes])
@@ -178,7 +178,7 @@ def _event_level_values(
     return events, columns
 
 
-def _check_event_attributes(ocel: OCEL, activity: str, attributes: list[EventAttribute]) -> None:
+def _check_event_attributes(ocel: OCEL, activity: str, attributes: list[EventAttributeRef]) -> None:
     schema = ocel.events.pl.collect_schema()
     for attribute in attributes:
         if attribute.name not in schema:

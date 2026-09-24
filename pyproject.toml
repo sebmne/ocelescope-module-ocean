@@ -4,13 +4,20 @@ version = "0.1.0"
 description = "An Ocelescope instance: the published backend host plus local modules"
 requires-python = ">=3.11"
 dependencies = [
-  "ocelescope-backend>=0.6.0",
-  "ocelescope-module-ocel>=0.6.0",
-  "ocelescope-module-example",
+  "ocelescope-backend>=0.8.0,<0.9.0",
+  "ocelescope-module-ocel>=0.8.0,<0.9.0",
+  "ocelescope-module-ocean",
+]
+
+[dependency-groups]
+dev = [
+  "import-linter>=2.3",
+  "pyright>=1.1.400",
+  "ruff>=0.12",
 ]
 
 [tool.uv.workspace]
 members = ["backend-modules/*"]
 
 [tool.uv.sources]
-ocelescope-module-example = { workspace = true }
+ocelescope-module-ocean = { workspace = true }

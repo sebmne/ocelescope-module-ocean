@@ -5,7 +5,13 @@ import {
   useObjectAttributes,
   type ValueType,
 } from "@ocelescope/api-base";
-import { EmptyState, FrequencyPicker, LoadingState, softBadgeStyle, useColorOf } from "@r4pm/components";
+import {
+  EmptyState,
+  FrequencyPicker,
+  LoadingState,
+  softBadgeStyle,
+  useColorOf,
+} from "@r4pm/components";
 import { Badge } from "@r4pm/components/ui";
 import { attributeItems } from "./internal/attributeItems";
 import { useOcelId } from "./internal/useOcelId";
@@ -104,12 +110,14 @@ export const RelatedAttributePicker = ({
     })),
   ].filter((group) => group.items.length > 0);
 
-  const loading = events.isPending || relations.isPending || (relatedTypes.length > 0 && objects.isPending);
+  const loading =
+    events.isPending || relations.isPending || (relatedTypes.length > 0 && objects.isPending);
 
   const content = () => {
     if (activity === undefined) return <EmptyState title="Choose an activity first" />;
     if (loading) return <LoadingState label="Reading the OCEL…" topBar={false} />;
-    if (groups.length === 0) return <EmptyState title={emptyText ?? "No attributes to pick from"} />;
+    if (groups.length === 0)
+      return <EmptyState title={emptyText ?? "No attributes to pick from"} />;
 
     return groups.map((group) => (
       <Stack key={group.key} gap={4}>

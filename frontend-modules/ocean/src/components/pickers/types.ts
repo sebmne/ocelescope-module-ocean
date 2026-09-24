@@ -28,13 +28,7 @@ export type Selection = SinglePicker | MultiPicker;
 
 /** The names as a set, which is how the pickers themselves hold them. */
 export const chosen = (selection: Selection): Set<string> =>
-  new Set(
-    selection.multiple
-      ? selection.value
-      : selection.value == null
-        ? []
-        : [selection.value],
-  );
+  new Set(selection.multiple ? selection.value : selection.value == null ? [] : [selection.value]);
 
 /** Report a set back as the one name, or the list, the caller asked for. */
 export const report = (selection: Selection, names: Iterable<string>) => {

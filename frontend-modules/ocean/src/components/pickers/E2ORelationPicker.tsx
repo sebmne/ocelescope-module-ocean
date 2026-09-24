@@ -18,8 +18,7 @@ export type E2ORelationPickerProps = OcelSource & {
  * any characters apart. */
 const keyOf = (relation: E2ORelation) => JSON.stringify([relation.objectType, relation.qualifier]);
 
-const perEvent = (min: number, max: number) =>
-  `${min === max ? min : `${min}–${max}`} per event`;
+const perEvent = (min: number, max: number) => `${min === max ? min : `${min}–${max}`} per event`;
 
 /**
  * The object types an activity's events relate to, one card per qualifier,

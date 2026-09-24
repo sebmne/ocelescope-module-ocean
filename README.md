@@ -39,6 +39,9 @@ The backend runs on <http://localhost:8000>, the frontend on
 | `pnpm run dev` | Runs the backend and frontend together. |
 | `pnpm run dev:modules` | Watch-rebuild local frontend modules while editing them. |
 | `pnpm run build:modules` | Builds local frontend modules (regenerates their API clients). |
+| `pnpm run format` | Formats everything: Biome for the frontend, ruff for the backend (also sorts imports). |
+| `pnpm run check:backend` | ruff lint, pyright, and the import-linter architecture contracts. |
+| `pnpm run check:frontend` | Biome lint, the type check, and the dependency-cruiser architecture rules. |
 
 ## Adding a module
 

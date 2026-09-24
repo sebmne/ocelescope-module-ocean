@@ -131,7 +131,12 @@ const NameDropdown = ({
                   role="button"
                   aria-label={`Remove ${name}`}
                   style={{ cursor: "pointer" }}
-                  onClick={() => report(selection, [...picked].filter((n) => n !== name))}
+                  onClick={() =>
+                    report(
+                      selection,
+                      [...picked].filter((n) => n !== name),
+                    )
+                  }
                 />
               )}
             </Badge>
@@ -143,9 +148,7 @@ const NameDropdown = ({
         // Multi: the box only adds names, so it stays empty and open for the next.
         value={selection.multiple ? "" : (selection.value ?? undefined)}
         options={selection.multiple ? names.filter((name) => !picked.has(name)) : names}
-        onValueChange={(name) =>
-          report(selection, selection.multiple ? [...picked, name] : [name])
-        }
+        onValueChange={(name) => report(selection, selection.multiple ? [...picked, name] : [name])}
         keepOpenOnSelect={selection.multiple}
         autoOpen={autoFocus}
         optionColor={colorOf}

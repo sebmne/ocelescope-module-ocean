@@ -2,14 +2,14 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True, kw_only=True)
-class EventAttribute:
+class EventAttributeRef:
     """An attribute of the rule's events."""
 
     name: str
 
 
 @dataclass(frozen=True, kw_only=True)
-class ObjectAttribute:
+class ObjectAttributeRef:
     """An attribute of the objects of one type related to the rule's events.
 
     Its value is the one the object had at the time of each event.
@@ -21,4 +21,4 @@ class ObjectAttribute:
     qualifier: str | None = None
 
 
-AttributeRef = EventAttribute | ObjectAttribute
+AttributeRef = EventAttributeRef | ObjectAttributeRef

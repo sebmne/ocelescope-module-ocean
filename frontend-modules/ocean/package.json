@@ -1,50 +1,57 @@
 {
-	"name": "@instance/ocean-module",
-	"version": "0.1.0",
-	"private": true,
-	"type": "module",
-	"exports": {
-		".": "./dist/index.js",
-		"./package.json": "./package.json"
-	},
-	"main": "./dist/index.js",
-	"types": "./dist/index.d.ts",
-	"files": [
-		"dist"
-	],
-	"scripts": {
-		"build": "tsdown",
-		"dev": "tsdown --watch ./src",
-		"typecheck": "tsc --noEmit"
-	},
-	"peerDependencies": {
-		"@mantine/core": "catalog:",
-		"@ocelescope/api-base": "catalog:",
-		"@ocelescope/api-client": "catalog:",
-		"@ocelescope/core": "catalog:",
-		"@r4pm/components": "catalog:",
-		"@tanstack/react-query": "catalog:",
-		"lucide-react": "catalog:",
-		"next": "catalog:",
-		"react": "catalog:",
-		"react-dom": "catalog:"
-	},
-	"devDependencies": {
-		"@mantine/core": "catalog:",
-		"@ocelescope/api-base": "catalog:",
-		"@ocelescope/api-client": "catalog:",
-		"@ocelescope/core": "catalog:",
-		"@r4pm/components": "catalog:",
-		"@tanstack/react-query": "catalog:",
-		"@types/react": "catalog:",
-		"lucide-react": "catalog:",
-		"next": "catalog:",
-		"react": "catalog:",
-		"react-dom": "catalog:",
-		"tsdown": "catalog:",
-		"typescript": "catalog:"
-	},
-	"dependencies": {
-		"@lucide/lab": "catalog:"
-	}
+  "name": "@instance/ocean-module",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.js",
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "generate:api": "uv run ocelescope-backend openapi --module ocean",
+    "build": "pnpm run generate:api && orval && tsdown",
+    "dev": "tsdown --watch ./src",
+    "typecheck": "tsc --noEmit",
+    "check:architecture": "depcruise src --config .dependency-cruiser.cjs"
+  },
+  "peerDependencies": {
+    "@mantine/core": "catalog:",
+    "@ocelescope/api-base": "catalog:",
+    "@ocelescope/api-client": "catalog:",
+    "@ocelescope/core": "catalog:",
+    "@r4pm/components": "catalog:",
+    "@tanstack/react-query": "catalog:",
+    "axios": "catalog:",
+    "lucide-react": "catalog:",
+    "next": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:"
+  },
+  "devDependencies": {
+    "@mantine/core": "catalog:",
+    "@ocelescope/api-base": "catalog:",
+    "@ocelescope/api-client": "catalog:",
+    "@ocelescope/api-config": "catalog:",
+    "@ocelescope/core": "catalog:",
+    "@r4pm/components": "catalog:",
+    "@tanstack/react-query": "catalog:",
+    "@types/react": "catalog:",
+    "axios": "catalog:",
+    "dependency-cruiser": "catalog:",
+    "lucide-react": "catalog:",
+    "next": "catalog:",
+    "orval": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "tsdown": "catalog:",
+    "typescript": "catalog:"
+  },
+  "dependencies": {
+    "@lucide/lab": "catalog:"
+  }
 }

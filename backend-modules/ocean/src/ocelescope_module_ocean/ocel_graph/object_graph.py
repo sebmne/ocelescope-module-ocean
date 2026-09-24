@@ -8,11 +8,7 @@ _OID, _TYPE, _EID = "ocel:oid", "ocel:type", "ocel:eid"
 
 
 class ObjectGraph:
-    """Undirected graph of objects, identified by their object ids.
-
-    Backed by rustworkx, whose nodes are integer indices; the object ids are
-    mapped to and from them here, so callers never see the indices.
-    """
+    """Undirected graph of objects, identified by their object ids."""
 
     def __init__(self, objects: pl.Series, edges: pl.DataFrame) -> None:
         """objects: the object ids; edges: columns oid_1, oid_2 (both objects included)."""

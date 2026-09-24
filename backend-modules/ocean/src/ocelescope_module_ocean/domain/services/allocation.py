@@ -96,6 +96,7 @@ def allocate(
     ).with_columns(pl.col(OBJECT_EMISSIONS_KG).fill_null(0.0))
 
     result = ObjectEmissions(
+        config=config,
         per_object=per_object,
         steps=AllocationSteps(
             direct_kg=float(direct[OBJECT_EMISSIONS_KG].sum()),
@@ -197,6 +198,7 @@ def _split_evenly(event_targets: pl.DataFrame) -> pl.DataFrame:
 def summarize_allocation(object_emissions: ObjectEmissions) -> AllocationSummary:
     """Totals, steps and the distribution over the target objects."""
     return AllocationSummary(
+        config=object_emissions.config,
         total_kg=object_emissions.total_kg,
         target_objects=object_emissions.per_object.height,
         steps=object_emissions.steps,

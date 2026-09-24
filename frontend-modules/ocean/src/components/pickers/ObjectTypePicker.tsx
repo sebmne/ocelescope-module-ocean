@@ -19,12 +19,5 @@ export const ObjectTypePicker = ({
     { query: { enabled: id != null } },
   );
 
-  return (
-    <NamePicker
-      items={data ?? {}}
-      scope="objectType"
-      loading={isPending}
-      {...picker}
-    />
-  );
+  return <NamePicker items={data ?? {}} scope="objectType" loading={isPending} {...picker} />;
 };

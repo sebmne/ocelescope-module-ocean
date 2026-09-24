@@ -43,6 +43,8 @@ catalog:
   "@tanstack/react-query": ^5.103.2
   axios: ^1.20.0
   # Tooling
+  "@biomejs/biome": ^2.5.14
+  dependency-cruiser: ^18.4.0
   orval: ^8.36.0
   tsdown: ^0.22.14
   typescript: ^5.9.3

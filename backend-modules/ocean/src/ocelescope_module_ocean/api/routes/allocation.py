@@ -21,10 +21,12 @@ from ocelescope_module_ocean.domain.models.allocation import (
 router = APIRouter(tags=["Allocation"])
 
 
-# ---- Request models ----------------------------------------------------------
+# ---- Transport models --------------------------------------------------------
 
 
-class AllocateEmissionsRequest(ApiModel):
+class AllocationConfigModel(ApiModel):
+    """How to allocate: sent to allocate, and returned with the result."""
+
     target_object_types: list[str]
     rule: AllocationRule
     pass_via_resources: bool = False
@@ -38,8 +40,14 @@ class AllocateEmissionsRequest(ApiModel):
             pass_between_same_type=self.pass_between_same_type,
         )
 
-
-# ---- Response models ---------------------------------------------------------
+    @classmethod
+    def from_domain(cls, config: AllocationConfig) -> "AllocationConfigModel":
+        return cls(
+            target_object_types=list(config.target_object_types),
+            rule=config.rule,
+            pass_via_resources=config.pass_via_resources,
+            pass_between_same_type=config.pass_between_same_type,
+        )
 
 
 class HistogramBinResponse(ApiModel):
@@ -57,6 +65,7 @@ class AllocationStepsResponse(ApiModel):
 
 
 class ObjectEmissionsResponse(ApiModel):
+    config: AllocationConfigModel
     total_kg: float
     target_objects: int
     steps: AllocationStepsResponse
@@ -65,6 +74,7 @@ class ObjectEmissionsResponse(ApiModel):
     @classmethod
     def from_domain(cls, result: AllocationSummary) -> "ObjectEmissionsResponse":
         return cls(
+            config=AllocationConfigModel.from_domain(result.config),
             total_kg=result.total_kg,
             target_objects=result.target_objects,
             steps=AllocationStepsResponse(
@@ -104,7 +114,7 @@ def get_allocation(
 )
 def allocate_emissions(
     ocel_id: str,
-    body: AllocateEmissionsRequest,
+    body: AllocationConfigModel,
     use_case: Annotated[AllocateEmissions, Depends(get_allocate_emissions)],
 ) -> ObjectEmissionsResponse:
     """Allocates the OCEL's computed emissions to the objects of the target types."""

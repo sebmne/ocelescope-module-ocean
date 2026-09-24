@@ -30,7 +30,7 @@ select = ["E", "F", "I", "UP", "B"]
 [tool.pyright]
 include = ["src"]
 
-# The architecture, enforced: `uv run lint-imports --config backend-modules/ocean/pyproject.toml`
+# The architecture, enforced: `pnpm run check:backend` (repository root) runs these contracts.
 [tool.importlinter]
 root_package = "ocelescope_module_ocean"
 include_external_packages = true
