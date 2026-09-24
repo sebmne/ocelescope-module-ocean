@@ -1,0 +1,113 @@
+[project]
+name = "ocelescope-module-ocean"
+version = "0.1.0"
+description = "OCEAn: object-centric emission analysis for Ocelescope"
+requires-python = ">=3.11"
+dependencies = [
+  "ocelescope>=0.8.0,<0.9.0",
+  "ocelescope-backend>=0.8.0,<0.9.0",
+  "polars>=1.40",
+  "pydantic>=2.11",
+  "rustworkx>=0.17",
+]
+
+[project.entry-points."ocelescope_backend.modules"]
+oceanV1 = "ocelescope_module_ocean.module:Ocean"
+
+[build-system]
+requires = ["uv_build>=0.11.20,<0.12.0"]
+build-backend = "uv_build"
+
+[tool.uv]
+package = true
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pyright]
+include = ["src"]
+
+# The architecture, enforced: `uv run lint-imports --config backend-modules/ocean/pyproject.toml`
+[tool.importlinter]
+root_package = "ocelescope_module_ocean"
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "Layers: api -> application -> domain"
+type = "layers"
+layers = [
+  "ocelescope_module_ocean.module",
+  "ocelescope_module_ocean.api",
+  "ocelescope_module_ocean.infrastructure",
+  "ocelescope_module_ocean.application",
+  "ocelescope_module_ocean.domain",
+  "ocelescope_module_ocean.ocel_graph | ocelescope_module_ocean.ocel_utils",
+]
+
+[[tool.importlinter.contracts]]
+name = "Only the composition root knows the adapters"
+type = "forbidden"
+source_modules = ["ocelescope_module_ocean.api.routes"]
+forbidden_modules = ["ocelescope_module_ocean.infrastructure"]
+# Routes reach adapters only through api/dependencies.py; direct imports are what's forbidden.
+allow_indirect_imports = true
+
+[[tool.importlinter.contracts]]
+name = "Application and domain know no web framework, server or pydantic (plain dataclasses)"
+type = "forbidden"
+source_modules = ["ocelescope_module_ocean.application", "ocelescope_module_ocean.domain"]
+forbidden_modules = ["fastapi", "ocelescope_backend", "pydantic"]
+
+[[tool.importlinter.contracts]]
+name = "ocel_graph and ocel_utils are independent of OCEAn (candidates for Ocelescope core)"
+type = "forbidden"
+source_modules = ["ocelescope_module_ocean.ocel_graph", "ocelescope_module_ocean.ocel_utils"]
+forbidden_modules = [
+  "ocelescope_module_ocean.domain",
+  "ocelescope_module_ocean.application",
+  "ocelescope_module_ocean.infrastructure",
+  "ocelescope_module_ocean.api",
+  "ocelescope_backend",
+  "fastapi",
+]
+
+[[tool.importlinter.contracts]]
+name = "rustworkx stays inside ObjectGraph (so the graph library can be swapped)"
+type = "forbidden"
+source_modules = [
+  "ocelescope_module_ocean.domain",
+  "ocelescope_module_ocean.application",
+  "ocelescope_module_ocean.infrastructure",
+  "ocelescope_module_ocean.api",
+  "ocelescope_module_ocean.ocel_graph.nearest",
+  "ocelescope_module_ocean.ocel_utils",
+]
+forbidden_modules = ["rustworkx"]
+# Everything reaches rustworkx through ObjectGraph; only direct imports are forbidden.
+allow_indirect_imports = true
+
+[[tool.importlinter.contracts]]
+name = "Domain models are data: they cannot reach the OCEL or any computation"
+type = "forbidden"
+source_modules = ["ocelescope_module_ocean.domain.models"]
+forbidden_modules = [
+  "ocelescope_module_ocean.domain.services",
+  "ocelescope_module_ocean.ocel_utils",
+  "ocelescope_module_ocean.ocel_graph",
+  "ocelescope",
+]
+
+[[tool.importlinter.contracts]]
+name = "Endpoints only run use cases: no domain services or helpers in the API"
+type = "forbidden"
+source_modules = ["ocelescope_module_ocean.api"]
+forbidden_modules = [
+  "ocelescope_module_ocean.domain.services",
+  "ocelescope_module_ocean.ocel_utils",
+  "ocelescope_module_ocean.ocel_graph",
+]
+# The API reaches services through the use cases; only direct imports are forbidden.
+allow_indirect_imports = true
