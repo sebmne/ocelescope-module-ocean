@@ -1,0 +1,33 @@
+[project]
+name = "socel"
+version = "0.1.0"
+description = "sOCEL: the OCEL for sustainability analysis, on top of Ocelescope's OCEL"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "ocelescope>=0.8.0,<0.9.0",
+]
+
+[build-system]
+requires = ["uv_build>=0.11.20,<0.12.0"]
+build-backend = "uv_build"
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pyright]
+include = ["src"]
+
+# The architecture, enforced: `pnpm run check:socel` (repository root) runs these contracts.
+[tool.importlinter]
+root_package = "socel"
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "sOCEL is a data standard: no backend, web framework or Ocelescope module"
+type = "forbidden"
+source_modules = ["socel"]
+forbidden_modules = ["ocelescope_backend", "fastapi", "pydantic", "ocelescope_module_socel"]

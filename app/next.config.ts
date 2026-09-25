@@ -11,7 +11,7 @@ const nextConfig: NextConfig = {
 	transpilePackages: [
 		"@mantine/charts",
 		"recharts",
-		"@instance/ocean-module",
+		"@instance/socel-module",
 	],
 	rewrites: async () => [
 		{ source: "/api/external/:path*", destination: `${apiBase}/:path*` },

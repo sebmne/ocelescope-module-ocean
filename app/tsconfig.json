@@ -21,8 +21,8 @@
       "@/*": [
         "./*"
       ],
-      "@instance/ocean-module": [
-        "../frontend-modules/ocean/src/index.ts"
+      "@instance/socel-module": [
+        "../frontend-modules/socel/src/index.ts"
       ]
     }
   },

@@ -1,0 +1,114 @@
+[project]
+name = "ocelescope-module-socel"
+version = "0.1.0"
+description = "sOCEL: sustainability analysis for Ocelescope, including OCEAn (object-centric emission analysis)"
+requires-python = ">=3.11"
+dependencies = [
+  "ocelescope>=0.8.0,<0.9.0",
+  "ocelescope-backend>=0.8.0,<0.9.0",
+  "polars>=1.40",
+  "pydantic>=2.11",
+  "rustworkx>=0.17",
+]
+
+[project.entry-points."ocelescope_backend.modules"]
+socelV1 = "ocelescope_module_socel.module:Socel"
+
+[build-system]
+requires = ["uv_build>=0.11.20,<0.12.0"]
+build-backend = "uv_build"
+
+[tool.uv]
+package = true
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pyright]
+include = ["src"]
+
+# The architecture, enforced: `pnpm run check:backend` (repository root) runs these contracts.
+# The module is made of slices, one per page (for now OCEAn in `ocean/`), each
+# with its own layers, plus shared OCEL helpers that know no slice.
+[tool.importlinter]
+root_package = "ocelescope_module_socel"
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "Module: the module mounts the slices, the slices use the shared helpers"
+type = "layers"
+layers = [
+  "ocelescope_module_socel.module",
+  "ocelescope_module_socel.ocean",
+  "ocelescope_module_socel.ocel_graph | ocelescope_module_socel.ocel_utils",
+]
+
+[[tool.importlinter.contracts]]
+name = "Slices: api -> infrastructure -> application -> domain"
+type = "layers"
+containers = ["ocelescope_module_socel.ocean"]
+layers = ["api", "infrastructure", "application", "domain"]
+
+[[tool.importlinter.contracts]]
+name = "Only the composition root knows the adapters"
+type = "forbidden"
+source_modules = ["ocelescope_module_socel.ocean.api.routes"]
+forbidden_modules = ["ocelescope_module_socel.ocean.infrastructure"]
+# Routes reach adapters only through api/dependencies.py; direct imports are what's forbidden.
+allow_indirect_imports = true
+
+[[tool.importlinter.contracts]]
+name = "Application and domain know no web framework, server or pydantic (plain dataclasses)"
+type = "forbidden"
+source_modules = ["ocelescope_module_socel.ocean.application", "ocelescope_module_socel.ocean.domain"]
+forbidden_modules = ["fastapi", "ocelescope_backend", "pydantic"]
+
+[[tool.importlinter.contracts]]
+name = "ocel_graph and ocel_utils are independent of the module (candidates for Ocelescope core)"
+type = "forbidden"
+source_modules = ["ocelescope_module_socel.ocel_graph", "ocelescope_module_socel.ocel_utils"]
+forbidden_modules = [
+  "ocelescope_module_socel.module",
+  "ocelescope_module_socel.ocean",
+  "ocelescope_backend",
+  "fastapi",
+]
+
+[[tool.importlinter.contracts]]
+name = "rustworkx stays inside ObjectGraph (so the graph library can be swapped)"
+type = "forbidden"
+source_modules = [
+  "ocelescope_module_socel.module",
+  "ocelescope_module_socel.ocean",
+  "ocelescope_module_socel.ocel_graph.nearest",
+  "ocelescope_module_socel.ocel_utils",
+]
+forbidden_modules = ["rustworkx"]
+# Everything reaches rustworkx through ObjectGraph; only direct imports are forbidden.
+allow_indirect_imports = true
+
+[[tool.importlinter.contracts]]
+name = "Domain models are data: they cannot reach the OCEL or any computation"
+type = "forbidden"
+source_modules = ["ocelescope_module_socel.ocean.domain.models"]
+forbidden_modules = [
+  "ocelescope_module_socel.ocean.domain.services",
+  "ocelescope_module_socel.ocel_utils",
+  "ocelescope_module_socel.ocel_graph",
+  "ocelescope",
+]
+
+[[tool.importlinter.contracts]]
+name = "Endpoints only run use cases: no domain services or helpers in the API"
+type = "forbidden"
+source_modules = ["ocelescope_module_socel.ocean.api"]
+forbidden_modules = [
+  "ocelescope_module_socel.ocean.domain.services",
+  "ocelescope_module_socel.ocel_utils",
+  "ocelescope_module_socel.ocel_graph",
+]
+# The API reaches services through the use cases; only direct imports are forbidden.
+allow_indirect_imports = true

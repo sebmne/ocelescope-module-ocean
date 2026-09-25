@@ -39,14 +39,15 @@ The backend runs on <http://localhost:8000>, the frontend on
 | `pnpm run dev` | Runs the backend and frontend together. |
 | `pnpm run dev:modules` | Watch-rebuild local frontend modules while editing them. |
 | `pnpm run build:modules` | Builds local frontend modules (regenerates their API clients). |
-| `pnpm run format` | Formats everything: Biome for the frontend, ruff for the backend (also sorts imports). |
+| `pnpm run format` | Formats everything: Biome for the frontend, ruff for the backend and the sOCEL package (also sorts imports). |
 | `pnpm run check:backend` | ruff lint, pyright, and the import-linter architecture contracts. |
+| `pnpm run check:socel` | ruff lint, pyright, and the import-linter contract of the sOCEL package. |
 | `pnpm run check:frontend` | Biome lint, the type check, and the dependency-cruiser architecture rules. |
 
 ## Adding a module
 
 **Frontend** — create a package in `frontend-modules/` (use
-`frontend-modules/ocean` as a reference), then in `app/`:
+`frontend-modules/socel` as a reference), then in `app/`:
 
 1. add it to `dependencies` (`"@instance/your-module": "workspace:*"`),
 2. add a path alias to its `src/index.ts` in `app/tsconfig.json`,
@@ -60,10 +61,10 @@ its entry point in `pyproject.toml`, add it to the root `pyproject.toml`
 (`orval.config.ts`, `src/lib/fetcher.ts` and a `generate:api` script) like the
 Ocelescope docs describe.
 
-The frontend layout is described in `frontend-modules/ocean/README.md`. In short:
-code used in one place stays there (page-only parts in the route's folder,
-page-only hooks too), and code used in several places
-goes to `components/` or `hooks/`.
+The frontend layout of `frontend-modules/socel` is described at the top of its
+`.dependency-cruiser.cjs`, which also enforces it: routes compose features,
+features, data and model are grouped per page (e.g. `ocean/`), and `ui/` is the
+only place that knows the component library.
 
 ### Dependency versions
 

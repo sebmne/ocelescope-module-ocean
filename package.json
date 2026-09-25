@@ -12,11 +12,13 @@
 		"dev:backend": "uv run ocelescope-backend serve --reload --reload-dir backend-modules --env-file .env",
 		"dev:app": "pnpm --filter @instance/app dev",
 		"dev:modules": "pnpm -r --parallel --filter \"!@instance/app\" run dev",
-		"check:backend": "cd backend-modules/ocean && uv run ruff check && uv run pyright && uv run lint-imports",
-		"check:frontend": "biome ci --formatter-enabled=false && pnpm --filter @instance/ocean-module typecheck && pnpm --filter @instance/ocean-module check:architecture",
-		"format": "pnpm run format:frontend && pnpm run format:backend",
+		"check:backend": "cd backend-modules/socel && uv run ruff check && uv run pyright && uv run lint-imports",
+		"check:socel": "cd packages/socel && uv run ruff check && uv run pyright && uv run lint-imports",
+		"check:frontend": "biome ci --formatter-enabled=false && pnpm --filter @instance/socel-module typecheck && pnpm --filter @instance/socel-module check:architecture",
+		"format": "pnpm run format:frontend && pnpm run format:backend && pnpm run format:socel",
 		"format:frontend": "biome check --write",
-		"format:backend": "cd backend-modules/ocean && uv run ruff check --fix && uv run ruff format"
+		"format:backend": "cd backend-modules/socel && uv run ruff check --fix && uv run ruff format",
+		"format:socel": "cd packages/socel && uv run ruff check --fix && uv run ruff format"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "catalog:"

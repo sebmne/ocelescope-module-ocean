@@ -10,7 +10,7 @@
 		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
-		"@instance/ocean-module": "workspace:*",
+		"@instance/socel-module": "workspace:*",
 		"@ocelescope/core": "catalog:",
 		"@ocelescope/management": "catalog:",
 		"@mantine/core": "catalog:",
