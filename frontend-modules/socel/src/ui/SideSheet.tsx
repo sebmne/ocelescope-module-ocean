@@ -1,4 +1,4 @@
-import { Box, Dialog, Flex, IconButton, Text } from "@r4pm/components/ui";
+import { Box, Dialog, Flex, IconButton } from "@r4pm/components/ui";
 import { XIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
@@ -6,7 +6,6 @@ interface SideSheetProps {
   open: boolean;
   onClose: () => void;
   title: string;
-  description?: string;
   /** Buttons pinned to the bottom of the sheet. */
   footer?: ReactNode;
   children: ReactNode;
@@ -14,14 +13,7 @@ interface SideSheetProps {
 
 // A panel sliding over the right edge, for editing without leaving the page.
 // (Radix has no drawer; this is its Dialog, placed at the side.)
-export default function SideSheet({
-  open,
-  onClose,
-  title,
-  description,
-  footer,
-  children,
-}: SideSheetProps) {
+export default function SideSheet({ open, onClose, title, footer, children }: SideSheetProps) {
   return (
     <Dialog.Root open={open} onOpenChange={(next) => !next && onClose()}>
       <Dialog.Content
@@ -49,16 +41,9 @@ export default function SideSheet({
           py="4"
           style={{ borderBottom: "1px solid var(--gray-a4)" }}
         >
-          <Box>
-            <Dialog.Title size="4" mb="0">
-              {title}
-            </Dialog.Title>
-            {description && (
-              <Text as="p" size="2" color="gray">
-                {description}
-              </Text>
-            )}
-          </Box>
+          <Dialog.Title size="4" mb="0">
+            {title}
+          </Dialog.Title>
           <Dialog.Close>
             <IconButton variant="ghost" color="gray" aria-label="Close">
               <XIcon size={18} />

@@ -47,13 +47,14 @@ export default function AllocationSection({ step }: AllocationSectionProps) {
     <Section
       step={step}
       title="Allocation"
-      description="Distribute the event emissions to the objects they belong to."
       status={status}
       footer={
-        <Flex justify="between" align="center" gap="3" wrap="wrap">
-          <Text size="2" color="gray">
-            {blocker ?? "Every target object gets its share of the emissions."}
-          </Text>
+        <Flex justify="end" align="center" gap="3" wrap="wrap">
+          {blocker && (
+            <Text size="2" color="gray">
+              {blocker}
+            </Text>
+          )}
           <Button
             onClick={() => allocation.allocate(config)}
             disabled={blocker !== undefined}
@@ -67,7 +68,7 @@ export default function AllocationSection({ step }: AllocationSectionProps) {
     >
       <Field
         label="Target object types"
-        description="The objects that carry the emissions in the end, e.g. orders or products."
+        info="The objects that carry the emissions in the end, e.g. orders or products."
       >
         <ObjectTypePicker
           variant="dropdown"
@@ -77,7 +78,7 @@ export default function AllocationSection({ step }: AllocationSectionProps) {
         />
       </Field>
 
-      <Field label="Allocation rule" description="Which target objects an event's emissions go to.">
+      <Field label="Allocation rule">
         <ChoiceCards<AllocationRule>
           aria-label="Allocation rule"
           choices={allocationRules}
@@ -90,7 +91,7 @@ export default function AllocationSection({ step }: AllocationSectionProps) {
             <Flex direction="column" gap="4">
               <Field
                 label="Resources"
-                description="Object types that serve many objects, e.g. trucks or forklifts. Emissions do not pass through them, so they do not spread to everything a truck ever carried."
+                info="Object types that serve many objects, e.g. trucks or forklifts. Emissions do not pass through them, so they do not spread to everything a truck ever carried."
               >
                 <ObjectTypePicker
                   variant="dropdown"
@@ -108,7 +109,7 @@ export default function AllocationSection({ step }: AllocationSectionProps) {
               </Field>
               <SwitchField
                 label="Pass emissions via resources"
-                description="Treat resources like every other object after all."
+                info="Treat resources like every other object after all."
                 disabled={config.resourceObjectTypes.length === 0}
                 checked={config.passViaResources}
                 onChange={(passViaResources) => update({ passViaResources })}

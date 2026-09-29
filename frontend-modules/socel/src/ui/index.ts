@@ -18,7 +18,7 @@ export {
   Tooltip,
   VisuallyHidden,
 } from "@r4pm/components/ui";
-
+export { type BarNode, default as BarTree } from "./BarTree";
 export { type Choice, default as ChoiceCards } from "./ChoiceCards";
 export { default as ClickableRow } from "./ClickableRow";
 export { default as EmptyState } from "./EmptyState";

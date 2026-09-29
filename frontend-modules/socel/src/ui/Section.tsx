@@ -1,11 +1,10 @@
-import { Box, Card, Flex, Heading, Inset, Text } from "@r4pm/components/ui";
+import { Box, Card, Flex, Heading, Inset } from "@r4pm/components/ui";
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import StatusBadge, { type Status } from "./StatusBadge";
 
 interface SectionProps {
   title: string;
-  description?: string;
   /** A step of a workflow: shown as its number instead of an icon. */
   step?: number;
   icon?: LucideIcon;
@@ -22,7 +21,6 @@ interface SectionProps {
 // below, and an optional footer band.
 export default function Section({
   title,
-  description,
   step,
   icon: Icon,
   status,
@@ -57,16 +55,9 @@ export default function Section({
                 {step !== undefined ? step : Icon && <Icon size={17} />}
               </Flex>
             )}
-            <Box minWidth="0">
-              <Heading as="h2" size="4" style={{ lineHeight: "32px" }}>
-                {title}
-              </Heading>
-              {description && (
-                <Text as="p" size="2" color="gray">
-                  {description}
-                </Text>
-              )}
-            </Box>
+            <Heading as="h2" size="4" style={{ lineHeight: "32px" }}>
+              {title}
+            </Heading>
           </Flex>
           {(status || actions) && (
             <Flex align="center" gap="3" style={{ minHeight: 32 }}>

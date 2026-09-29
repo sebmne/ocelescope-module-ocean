@@ -2,7 +2,6 @@ import { ListChecksIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
 import { useComputeEmissions } from "../../../../data/ocean/useComputeEmissions";
 import { useEmissionsOverview } from "../../../../data/ocean/useEmissionsOverview";
-import { isRuleComplete } from "../../../../model/ocean/emissionRules";
 import {
   Button,
   EmptyState,
@@ -12,7 +11,6 @@ import {
   SideSheet,
   Spinner,
   type Status,
-  Text,
 } from "../../../../ui";
 import RuleEditor from "./RuleEditor";
 import RuleTable from "./RuleTable";
@@ -32,7 +30,6 @@ export default function EmissionRuleSection({ step }: EmissionRuleSectionProps) 
   const editingRule = rules.find((rule) => rule.id === editingId);
   const addRule = () => setEditingId(onAdd());
 
-  const completeCount = rules.filter(isRuleComplete).length;
   const computation = useComputeEmissions(rules);
   const computed = useEmissionsOverview().data?.totalKg != null;
 
@@ -48,7 +45,6 @@ export default function EmissionRuleSection({ step }: EmissionRuleSectionProps) 
     <Section
       step={step}
       title="Emission rules"
-      description="Say how much CO₂e the events of each activity emit."
       status={status}
       actions={
         !isLoading &&
@@ -59,14 +55,7 @@ export default function EmissionRuleSection({ step }: EmissionRuleSectionProps) 
         )
       }
       footer={
-        <Flex justify="between" align="center" gap="3" wrap="wrap">
-          <Text size="2" color="gray">
-            {rules.length === 0
-              ? "Add a rule to compute emissions."
-              : completeCount === rules.length
-                ? `${rules.length} ${rules.length === 1 ? "rule" : "rules"}, all complete`
-                : `${completeCount} of ${rules.length} rules complete; incomplete ones are left out`}
-          </Text>
+        <Flex justify="end" align="center" gap="3" wrap="wrap">
           <Button
             onClick={computation.compute}
             disabled={!computation.canCompute}
@@ -91,10 +80,7 @@ export default function EmissionRuleSection({ step }: EmissionRuleSectionProps) 
               <PlusIcon size={15} aria-hidden /> Add the first rule
             </Button>
           }
-        >
-          A rule assigns emissions to the events of an activity, e.g. 2.5 kg CO₂e for each “Load
-          Truck” event, or for each truck involved in it.
-        </EmptyState>
+        />
       ) : (
         <RuleTable rules={rules} onEdit={setEditingId} onRemove={onRemove} />
       )}
@@ -106,7 +92,6 @@ export default function EmissionRuleSection({ step }: EmissionRuleSectionProps) 
         open={editingRule !== undefined}
         onClose={() => setEditingId(null)}
         title="Edit rule"
-        description="Changes are saved as you type."
         footer={
           editingRule && (
             <Flex justify="between">

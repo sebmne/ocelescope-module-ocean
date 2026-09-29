@@ -1,36 +1,34 @@
 import { Flex, Switch, Text } from "@r4pm/components/ui";
+import InfoTip from "./InfoTip";
 
 interface SwitchFieldProps {
   label: string;
-  description?: string;
+  /** An explanation, shown on hovering the label's info icon. */
+  info?: string;
   checked: boolean;
   onChange: (checked: boolean) => void;
   disabled?: boolean;
 }
 
-// An on/off option with a label and an optional explanation.
+// An on/off option with a label and an optional info tip.
 export default function SwitchField({
   label,
-  description,
+  info,
   checked,
   onChange,
   disabled,
 }: SwitchFieldProps) {
   return (
-    <Text as="label" size="2" style={{ cursor: disabled ? "default" : "pointer" }}>
-      <Flex gap="3" align="start">
-        <Switch mt="1" checked={checked} onCheckedChange={onChange} disabled={disabled} />
-        <Flex direction="column">
+    <Flex gap="3" align="center">
+      <Text as="label" size="2" style={{ cursor: disabled ? "default" : "pointer" }}>
+        <Flex gap="3" align="center">
+          <Switch checked={checked} onCheckedChange={onChange} disabled={disabled} />
           <Text weight="medium" color={disabled ? "gray" : undefined}>
             {label}
           </Text>
-          {description && (
-            <Text size="1" color="gray">
-              {description}
-            </Text>
-          )}
         </Flex>
-      </Flex>
-    </Text>
+      </Text>
+      {info && <InfoTip content={info} />}
+    </Flex>
   );
 }

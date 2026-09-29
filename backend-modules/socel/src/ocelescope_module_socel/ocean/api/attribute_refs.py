@@ -4,7 +4,7 @@ from typing import Annotated, Literal
 
 from pydantic import Field
 
-from ocelescope_module_socel.ocean.api.schema import ApiModel
+from ocelescope_module_socel.api_schema import ApiModel
 from ocelescope_module_socel.ocean.domain.models.attributes import (
     AttributeRef,
     EventAttributeRef,

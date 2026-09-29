@@ -2,11 +2,11 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends
 
+from ocelescope_module_socel.api_schema import ApiModel
 from ocelescope_module_socel.ocean.api.dependencies import (
     get_allocate_emissions,
     get_object_emissions,
 )
-from ocelescope_module_socel.ocean.api.schema import ApiModel
 from ocelescope_module_socel.ocean.application.use_cases.allocate_emissions import (
     AllocateEmissions,
     AllocateEmissionsCommand,

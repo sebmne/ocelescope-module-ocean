@@ -2,6 +2,7 @@ from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends
 
+from ocelescope_module_socel.api_schema import ApiModel
 from ocelescope_module_socel.ocean.api.attribute_refs import (
     AttributeRefModel,
     attribute_ref_from_domain,
@@ -10,7 +11,6 @@ from ocelescope_module_socel.ocean.api.dependencies import (
     get_emission_rules,
     get_save_emission_rules,
 )
-from ocelescope_module_socel.ocean.api.schema import ApiModel
 from ocelescope_module_socel.ocean.application.use_cases.get_emission_rules import (
     GetEmissionRules,
     GetEmissionRulesCommand,

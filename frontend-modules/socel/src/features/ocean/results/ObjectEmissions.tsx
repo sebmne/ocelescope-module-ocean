@@ -23,9 +23,7 @@ export default function ObjectEmissions() {
   if (!data) {
     return (
       <Section icon={ChartColumnIcon} title="Emissions per object">
-        <EmptyState icon={ChartColumnIcon} title="Nothing allocated yet">
-          Once the emissions are allocated, this shows how they are spread over the target objects.
-        </EmptyState>
+        <EmptyState icon={ChartColumnIcon} title="Nothing allocated yet" />
       </Section>
     );
   }
@@ -58,19 +56,12 @@ export default function ObjectEmissions() {
   ];
 
   return (
-    <Section
-      icon={ChartColumnIcon}
-      title="Emissions per object"
-      description={`${formatCo2e(data.totalKg)} allocated to ${formatCount(data.targetObjects)} target objects.`}
-    >
+    <Section icon={ChartColumnIcon} title="Emissions per object">
       <Grid columns={{ initial: "1", md: "3fr 2fr" }} gap="6">
         <Box>
-          <Heading as="h3" size="2" mb="1">
+          <Heading as="h3" size="2" mb="4">
             Distribution
           </Heading>
-          <Text as="p" size="1" color="gray" mb="4">
-            How many objects carry how much CO₂e.
-          </Text>
           {bins.length > 1 ? (
             <Histogram
               bins={bins}
@@ -82,19 +73,16 @@ export default function ObjectEmissions() {
             // One bin: every object carries the same, there is nothing to chart.
             <Panel>
               <Text size="2">
-                All {formatCount(data.targetObjects)} objects carry the same:{" "}
-                <Strong>{formatCo2e(data.totalKg / Math.max(1, data.targetObjects))}</Strong> each.
+                {formatCount(data.targetObjects)} ×{" "}
+                <Strong>{formatCo2e(data.totalKg / Math.max(1, data.targetObjects))}</Strong>
               </Text>
             </Panel>
           )}
         </Box>
         <Box>
-          <Heading as="h3" size="2" mb="1">
+          <Heading as="h3" size="2" mb="4">
             How it was allocated
           </Heading>
-          <Text as="p" size="1" color="gray" mb="4">
-            The allocation assigns emissions in three steps.
-          </Text>
           <ProportionBar parts={steps} format={formatMass} />
         </Box>
       </Grid>

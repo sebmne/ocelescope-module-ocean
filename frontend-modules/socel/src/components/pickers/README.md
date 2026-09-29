@@ -19,6 +19,7 @@ Additions over core:
 | `EventAttributePicker`, `ObjectAttributePicker` | `valueTypes` filter; names carried by several types are listed once |
 | `E2ORelationPicker` (new) | the object types an activity relates to, per qualifier, as r4pm `CardSelector` cards |
 | `RelatedAttributePicker` (new) | an activity's event attributes plus those of its related object types |
+| `IdPicker`, `ObjectPicker` | a Radix popover instead of Mantine's `Select`, so they work inside Radix dialogs (a Mantine dropdown is portalled outside, where a modal dialog ignores the mouse); single selection only |
 
 When moving to core: replace `useCurrentOcel` from `@ocelescope/core` in
 `internal/useOcelId.ts` with core's relative import.

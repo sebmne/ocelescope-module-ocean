@@ -2,11 +2,13 @@ import dynamic from "next/dynamic";
 import type { ActivityPickerProps } from "./ActivityPicker";
 import type { E2ORelationPickerProps } from "./E2ORelationPicker";
 import type { EventAttributePickerProps } from "./EventAttributePicker";
+import type { IdPickerProps } from "./IdPicker";
 import type { NamePickerProps } from "./NamePicker";
 import type { ObjectAttributePickerProps } from "./ObjectAttributePicker";
+import type { ObjectPickerProps } from "./ObjectPicker";
 import type { ObjectTypePickerProps } from "./ObjectTypePicker";
 import type { RelatedAttributePickerProps } from "./RelatedAttributePicker";
-import type { Selection } from "./types";
+import type { Selection, SinglePicker } from "./types";
 
 /**
  * Picking names out of an OCEL. Mirrors @ocelescope/core's pickers (see
@@ -20,8 +22,10 @@ import type { Selection } from "./types";
 export type { ActivityPickerProps } from "./ActivityPicker";
 export type { E2ORelationPickerProps } from "./E2ORelationPicker";
 export type { EventAttributePickerProps } from "./EventAttributePicker";
+export type { IdPickerProps } from "./IdPicker";
 export type { NameItem, NamePickerProps } from "./NamePicker";
 export type { ObjectAttributePickerProps } from "./ObjectAttributePicker";
+export type { ObjectPickerProps } from "./ObjectPicker";
 export type { ObjectTypePickerProps } from "./ObjectTypePicker";
 export type { RelatedAttributePickerProps } from "./RelatedAttributePicker";
 export type {
@@ -67,5 +71,15 @@ export const E2ORelationPicker = dynamic<E2ORelationPickerProps>(
 
 export const RelatedAttributePicker = dynamic<RelatedAttributePickerProps>(
   () => import("./RelatedAttributePicker").then((module) => module.RelatedAttributePicker),
+  { ssr: false },
+);
+
+export const IdPicker = dynamic<IdPickerProps & SinglePicker>(
+  () => import("./IdPicker").then((module) => module.IdPicker),
+  { ssr: false },
+);
+
+export const ObjectPicker = dynamic<ObjectPickerProps & SinglePicker>(
+  () => import("./ObjectPicker").then((module) => module.ObjectPicker),
   { ssr: false },
 );

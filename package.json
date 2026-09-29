@@ -17,8 +17,8 @@
 		"check:frontend": "biome ci --formatter-enabled=false && pnpm --filter @instance/socel-module typecheck && pnpm --filter @instance/socel-module check:architecture",
 		"format": "pnpm run format:frontend && pnpm run format:backend && pnpm run format:socel",
 		"format:frontend": "biome check --write",
-		"format:backend": "cd backend-modules/socel && uv run ruff check --fix && uv run ruff format",
-		"format:socel": "cd packages/socel && uv run ruff check --fix && uv run ruff format"
+		"format:backend": "cd backend-modules/socel && uv run ruff format && uv run ruff check --fix",
+		"format:socel": "cd packages/socel && uv run ruff format && uv run ruff check --fix"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "catalog:"

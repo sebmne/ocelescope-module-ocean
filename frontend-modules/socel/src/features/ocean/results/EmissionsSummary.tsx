@@ -17,10 +17,6 @@ export default function EmissionsSummary() {
       ? allocation.totalKg / allocation.targetObjects
       : null,
   );
-  const share = (kg: number | null | undefined) => {
-    const percent = formatShare(kg, overview?.totalKg);
-    return percent && `${percent} of the total`;
-  };
 
   return (
     <Grid columns={{ initial: "2", md: "4" }} gap={{ initial: "3", md: "4" }}>
@@ -30,36 +26,28 @@ export default function EmissionsSummary() {
         label="Total emissions"
         value={total.value}
         unit={total.unit && `${total.unit} CO₂e`}
-        hint={
-          overview?.totalKg == null
-            ? "Compute emissions to see the total."
-            : `Exactly ${formatExactKg(overview.totalKg)}`
-        }
+        hint={overview?.totalKg == null ? undefined : formatExactKg(overview.totalKg)}
       />
       <Stat
         icon={ListChecksIcon}
         label="From rules"
         value={ruleBased.value}
         unit={ruleBased.unit}
-        hint={share(overview?.ruleBasedKg)}
+        hint={formatShare(overview?.ruleBasedKg, overview?.totalKg)}
       />
       <Stat
         icon={FileInputIcon}
         label="Imported"
         value={imported.value}
         unit={imported.unit}
-        hint={share(overview?.importedKg) ?? "Emissions recorded in the OCEL."}
+        hint={formatShare(overview?.importedKg, overview?.totalKg)}
       />
       <Stat
         icon={BoxIcon}
         label="Per target object"
         value={perObject.value}
         unit={perObject.unit}
-        hint={
-          allocation
-            ? `On average, across ${formatCount(allocation.targetObjects)} objects`
-            : "Allocate emissions to see."
-        }
+        hint={allocation ? `⌀ over ${formatCount(allocation.targetObjects)} objects` : undefined}
       />
     </Grid>
   );

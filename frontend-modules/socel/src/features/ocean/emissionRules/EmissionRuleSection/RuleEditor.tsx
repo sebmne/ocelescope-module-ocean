@@ -86,7 +86,7 @@ export default function RuleEditor({ rule, onChange }: RuleEditorProps) {
       <FieldGroup title="Emission factor">
         <Field
           label="Value"
-          description={`Emitted ${describeUnit(rule)}; multiplied by the attributes below, if any.`}
+          info={`Emitted ${describeUnit(rule)}; multiplied by the attributes below, if any.`}
         >
           <NumberField
             aria-label="Value"
@@ -97,7 +97,7 @@ export default function RuleEditor({ rule, onChange }: RuleEditorProps) {
           />
         </Field>
 
-        <Field label="Multiply by" description="Numeric attributes only.">
+        <Field label="Multiply by" info="Numeric attributes only.">
           <RelatedAttributePicker
             activity={rule.activity}
             // E2O: the relation's objects. Event: objects with one value per event.

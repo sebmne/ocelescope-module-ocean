@@ -20,4 +20,10 @@ dev = [
 members = ["backend-modules/*", "packages/*"]
 
 [tool.uv.sources]
+# Unreleased, until a release includes them: the OCEL extension tables
+# (promi4s/ocelescope#458, every further table of an SQLite log is read) and
+# resources declared by modules (#459). Both packages from the same commit.
+ocelescope = { git = "https://github.com/promi4s/ocelescope", rev = "f3964a14d052c2e030609dff15d7ab29ea506e55", subdirectory = "src/ocelescope" }
+ocelescope-backend = { git = "https://github.com/promi4s/ocelescope", rev = "f3964a14d052c2e030609dff15d7ab29ea506e55", subdirectory = "src/backend/ocelescope-backend" }
 ocelescope-module-socel = { workspace = true }
+socel = { workspace = true }
