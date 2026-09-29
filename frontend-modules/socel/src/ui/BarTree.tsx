@@ -22,10 +22,10 @@ interface BarTreeProps {
 
 const fills = { accent: "var(--accent-a5)", neutral: "var(--gray-a4)", muted: "var(--gray-a2)" };
 
-// A tree of labelled values, each drawn as a bar relative to the largest root;
-// nodes with children fold.
+// A tree of labelled values, each drawn as a bar relative to the largest root
+// (by magnitude: a negative value is an outflow); nodes with children fold.
 export default function BarTree({ nodes, format, openDepth = 1 }: BarTreeProps) {
-  const max = Math.max(1, ...nodes.map((node) => node.value));
+  const max = Math.max(1e-12, ...nodes.map((node) => Math.abs(node.value)));
   return (
     <Flex direction="column" gap="1" role="tree">
       {nodes.map((node) => (
@@ -94,7 +94,7 @@ function BarTreeRow({ node, depth, max, format, openDepth }: RowProps) {
             position="absolute"
             inset="0"
             style={{
-              width: `${(node.value / max) * 100}%`,
+              width: `${(Math.abs(node.value) / max) * 100}%`,
               background: fills[node.tone ?? "neutral"],
               borderRadius: "var(--radius-2)",
             }}

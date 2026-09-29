@@ -9,7 +9,7 @@ import { useSelectedOcel } from "../useSelectedOcel";
 
 export type ValidationResult = ValidationResultModel;
 
-/** Validates the selected OCEL against V1–V9; the report is kept as a resource. */
+/** Validates the selected OCEL against V1–V9. */
 export function useValidateSocel() {
   const { id } = useSelectedOcel();
   const mutation = useValidateSocelMutation();

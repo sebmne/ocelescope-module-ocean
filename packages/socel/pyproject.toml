@@ -16,6 +16,8 @@ build-backend = "uv_build"
 
 [tool.ruff]
 line-length = 100
+# The READMEs align their code comments by hand.
+extend-exclude = ["*.md"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
@@ -41,9 +43,10 @@ source_modules = ["socel"]
 forbidden_modules = ["ocelescope_backend", "fastapi", "pydantic", "ocelescope_module_socel"]
 
 [[tool.importlinter.contracts]]
-name = "Layers: model -> validation -> format -> taxonomy, Ocelescope mapping -> errors"
+name = "Layers: analysis -> model -> validation -> format -> taxonomy, Ocelescope mapping -> errors"
 type = "layers"
 layers = [
+  "socel.analysis",
   "socel.model",
   "socel.validation",
   "socel.format",

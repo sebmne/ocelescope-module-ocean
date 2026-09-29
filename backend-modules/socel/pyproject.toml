@@ -24,6 +24,8 @@ package = true
 
 [tool.ruff]
 line-length = 100
+# The READMEs align their code comments by hand.
+extend-exclude = ["*.md"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
@@ -44,14 +46,18 @@ name = "Module: the module mounts the slices, the slices use the shared helpers"
 type = "layers"
 layers = [
   "ocelescope_module_socel.module",
-  "ocelescope_module_socel.overview | ocelescope_module_socel.ocean",
+  "ocelescope_module_socel.overview | ocelescope_module_socel.analysis | ocelescope_module_socel.ocean",
   "ocelescope_module_socel.api_schema | ocelescope_module_socel.ocel_graph | ocelescope_module_socel.ocel_utils",
 ]
 
 [[tool.importlinter.contracts]]
 name = "Slices: api -> infrastructure -> application -> domain"
 type = "layers"
-containers = ["ocelescope_module_socel.ocean", "ocelescope_module_socel.overview"]
+containers = [
+  "ocelescope_module_socel.ocean",
+  "ocelescope_module_socel.overview",
+  "ocelescope_module_socel.analysis",
+]
 layers = ["api", "infrastructure", "application", "domain"]
 
 [[tool.importlinter.contracts]]
@@ -60,10 +66,12 @@ type = "forbidden"
 source_modules = [
   "ocelescope_module_socel.ocean.api.routes",
   "ocelescope_module_socel.overview.api.routes",
+  "ocelescope_module_socel.analysis.api.routes",
 ]
 forbidden_modules = [
   "ocelescope_module_socel.ocean.infrastructure",
   "ocelescope_module_socel.overview.infrastructure",
+  "ocelescope_module_socel.analysis.infrastructure",
 ]
 # Routes reach adapters only through api/dependencies.py; direct imports are what's forbidden.
 allow_indirect_imports = true
@@ -76,6 +84,8 @@ source_modules = [
   "ocelescope_module_socel.ocean.domain",
   "ocelescope_module_socel.overview.application",
   "ocelescope_module_socel.overview.domain",
+  "ocelescope_module_socel.analysis.application",
+  "ocelescope_module_socel.analysis.domain",
 ]
 forbidden_modules = ["fastapi", "ocelescope_backend", "pydantic"]
 
@@ -87,6 +97,7 @@ forbidden_modules = [
   "ocelescope_module_socel.module",
   "ocelescope_module_socel.ocean",
   "ocelescope_module_socel.overview",
+  "ocelescope_module_socel.analysis",
   "ocelescope_backend",
   "fastapi",
 ]
@@ -98,6 +109,7 @@ source_modules = [
   "ocelescope_module_socel.module",
   "ocelescope_module_socel.ocean",
   "ocelescope_module_socel.overview",
+  "ocelescope_module_socel.analysis",
   "ocelescope_module_socel.ocel_graph.nearest",
   "ocelescope_module_socel.ocel_utils",
 ]

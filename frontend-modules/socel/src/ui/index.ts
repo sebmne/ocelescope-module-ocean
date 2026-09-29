@@ -10,9 +10,12 @@ export {
   Grid,
   Heading,
   IconButton,
+  SegmentedControl,
+  Select,
   Separator,
   Spinner,
   Strong,
+  Switch,
   Table,
   Text,
   Tooltip,
@@ -33,6 +36,9 @@ export { default as ProportionBar, type Proportion } from "./ProportionBar";
 export { default as Section } from "./Section";
 export { default as SideSheet } from "./SideSheet";
 export { default as SocelTheme } from "./SocelTheme";
+export { default as SplitBar } from "./SplitBar";
 export { default as Stat } from "./Stat";
 export { default as StatusBadge, type Status, type StatusTone } from "./StatusBadge";
+export { default as SubHeading } from "./SubHeading";
 export { default as SwitchField } from "./SwitchField";
+export { default as TimeBars, type TimeBar } from "./TimeBars";

@@ -11,6 +11,7 @@ from polars import LazyFrame
 
 from socel._ocelescope import E2O, EID, OID, has_table, ident, is_read_only
 from socel.format.attributes import events_sql, objects_sql
+from socel.format.records import records_sql
 from socel.format.schema import CONTAINED_IN, EVENT_RECORDS, FLOW, INTERVAL_RECORDS, TABLES
 from socel.format.sqlite import read_tables, write_tables
 from socel.format.tables import drop_dangling_references, require_table
@@ -178,16 +179,7 @@ class SOCEL:
         point event."""
         for table in (INTERVAL_RECORDS, EVENT_RECORDS):
             require_table(self._ocel, table)
-        return self.sql(f"""
-            SELECT record_id, 'interval' AS kind, flow_id, object_id, quantity,
-                   start_time, end_time, NULL::VARCHAR AS event_id
-            FROM {INTERVAL_RECORDS.name}
-            UNION ALL
-            SELECT r.record_id, 'event', r.flow_id, r.object_id, r.quantity,
-                   e.time, e.end_time, r.event_id
-            FROM {EVENT_RECORDS.name} r
-            LEFT JOIN ({events_sql(self._ocel)}) e ON e.event_id = r.event_id
-        """).pl(lazy=True)
+        return self.sql(records_sql(self._ocel)).pl(lazy=True)
 
     @property
     def flow_instances(self) -> LazyFrame:

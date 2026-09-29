@@ -8,7 +8,9 @@ interval and event-linked records, and the containment of flow instances
 library, not on the Ocelescope backend, its modules or OCEAn.
 
 ```python
-from socel import SOCEL, SOCELEditor
+from datetime import timedelta
+
+from socel import SOCEL, SOCELEditor, allocate, attribute, carry, creation_values, flow_quantities, impact, parents
 
 socel = SOCEL.read("plant.sqlite")        # validated on import: V1–V9, the file's declarations included
 
@@ -25,6 +27,12 @@ socel.operations_of("furnace:1")          # E_fi (§6.0.1)
 
 socel.write("plant.sqlite")               # validated on export, too
 
+flow_quantities(socel, timedelta(weeks=1))  # q_fi per week, top-level flow instances (§6.1)
+attribution = attribute(socel)            # attr_fi(e), and recorded = attributed + remainder (§6.2)
+allocation = allocate(socel, attribution) # alloc^G_f(h) over the handling units per operation (§6.3)
+carried = carry(allocation.by_unit, parents(socel, "from part"), creation_values(socel, "mass"))
+impact(carried.filter("is_end"), {"natural gas": 1.9}, ["object_id"])  # pf^G(h) in kg CO2e (§6.4)
+
 changed = (                               # an sOCEL is read-only; the editor makes a new one
     SOCELEditor(socel)                    # works on a copy, also of read-only OCELs
     .classify_object_type("Furnace", "pr.processing.thermal")
@@ -40,6 +48,7 @@ changed = (                               # an sOCEL is read-only; the editor ma
 
 ```
 src/socel/
+├── analysis/     Chapter 6: quantities over time, attribution, allocation and lineage, impact
 ├── model/        Definition 5.3.2: SOCEL (read-only) and SOCELEditor
 ├── validation/   profiles: ordered pipelines of checks
 │   ├── check.py        Check, RowCheck, Subject (the log, and the file it came from), Finding
@@ -57,7 +66,7 @@ src/socel/
 └── errors.py     exceptions for misusing the library
 ```
 
-Import-linter enforces the layers: model → validation → format → taxonomy and
+Import-linter enforces the layers: analysis → model → validation → format → taxonomy and
 the Ocelescope mapping → errors. The schema and the taxonomy import neither
 Ocelescope, DuckDB nor polars.
 
@@ -98,6 +107,13 @@ format, the package decides as follows:
   SQLite log (promi4s/ocelescope#458), but drops timestamp offsets and writes
   tables without declarations, empty ones not at all. The four sOCEL tables are
   therefore read again and written by this package.
+- **Analyzed flow instances.** Totals and time series take the flow instances
+  contained in no other (G, Section 6.3), so nested meters count once.
+  Attribution widens a meter's eligible operations to its contained objects' only
+  if none of those carries records (group metering, Section 6.2).
+- **Lineage.** The source of an O2O relation with the chosen qualifier is created
+  from its target; a unit's mass is its first recorded value of the chosen
+  attribute. End units are the handling units without children.
 - **Filtering** drops records and containments of filtered-out objects and events,
   and keeps the flows.
 

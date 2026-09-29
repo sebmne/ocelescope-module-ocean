@@ -13,9 +13,23 @@ independent of the Ocelescope backend and its modules.
     changed = SOCELEditor(socel).add_flow("water", "l", "material.water").build()
 """
 
+from socel.analysis import (
+    Allocation,
+    Attribution,
+    allocate,
+    attribute,
+    carry,
+    creation_values,
+    flow_quantities,
+    impact,
+    parents,
+    unit_attributes,
+    unit_relation_qualifiers,
+)
 from socel.errors import (
     EditorClosedError,
     InvalidClassError,
+    LineageError,
     NotAnSocelError,
     SocelError,
     SocelWriteError,
@@ -43,6 +57,18 @@ from socel.validation import (
 )
 
 __all__ = [
+    "Allocation",
+    "Attribution",
+    "LineageError",
+    "allocate",
+    "attribute",
+    "carry",
+    "creation_values",
+    "flow_quantities",
+    "unit_relation_qualifiers",
+    "impact",
+    "parents",
+    "unit_attributes",
     "CONFORMANCE",
     "FLOW_CATEGORIES",
     "HANDLING_UNITS",

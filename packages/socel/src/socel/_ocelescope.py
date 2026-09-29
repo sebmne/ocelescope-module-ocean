@@ -12,6 +12,10 @@ from ocelescope import OCEL
 from ocelescope.ocel.constants.pm4py import (
     ACTIVITY_COL,
     EID_COL,
+    O2O_QUALIFIER,
+    O2O_SOURCE_ID,
+    O2O_TARGET_ID,
+    OBJECT_CHANGE_CUMCOUNT,
     OBJECT_CHANGED_FIELD,
     OID_COL,
     OTYPE_COL,
@@ -21,7 +25,12 @@ from ocelescope.util.sql import ident, literal, utc_timestamp
 
 __all__ = [
     "ACTIVITY",
+    "CHANGE_COLUMNS",
     "E2O",
+    "O2O",
+    "O2O_SOURCE",
+    "O2O_TARGET",
+    "QUALIFIER",
     "EID",
     "EPOCH",
     "EVENTS",
@@ -41,9 +50,12 @@ __all__ = [
     "utc_timestamp",
 ]
 
-EVENTS, OBJECTS, OBJECT_CHANGES, E2O = "events", "objects", "object_changes", "e2o"
+EVENTS, OBJECTS, OBJECT_CHANGES, E2O, O2O = "events", "objects", "object_changes", "e2o", "o2o"
 EID, OID, TIME = EID_COL, OID_COL, TIMESTAMP_COL
 ACTIVITY, OBJECT_TYPE, FIELD = ACTIVITY_COL, OTYPE_COL, OBJECT_CHANGED_FIELD
+O2O_SOURCE, O2O_TARGET, QUALIFIER = O2O_SOURCE_ID, O2O_TARGET_ID, O2O_QUALIFIER
+# The columns of `object_changes` that are no attribute.
+CHANGE_COLUMNS = (OID, OBJECT_TYPE, TIME, FIELD, OBJECT_CHANGE_CUMCOUNT)
 
 # An OCEL 2.0 object's initial attribute values carry this time: Ocelescope reads
 # them as rows of `object_changes` at the epoch, and writes such rows back as

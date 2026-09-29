@@ -79,3 +79,15 @@ export function formatPeriod(from: string, to: string) {
 export function parseUtc(timestamp: string) {
   return new Date(/(?:Z|[+-]\d\d:\d\d)$/i.test(timestamp) ? timestamp : `${timestamp}Z`);
 }
+
+/** A flow quantity, e.g. "49.1", "1,990" or "860.1M" for large ones. */
+export function formatQuantity(value: number) {
+  return Math.abs(value) >= 100_000
+    ? value.toLocaleString(undefined, { notation: "compact", maximumFractionDigits: 1 })
+    : value.toLocaleString(undefined, { maximumFractionDigits: 2 });
+}
+
+/** A count with its noun, e.g. "1 activity", "3 activities". */
+export function formatCounted(count: number, singular: string, plural = `${singular}s`) {
+  return `${formatCount(count)} ${count === 1 ? singular : plural}`;
+}

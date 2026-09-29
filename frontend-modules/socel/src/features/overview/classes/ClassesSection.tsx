@@ -2,7 +2,7 @@ import { BoxIcon, CogIcon, TagsIcon } from "lucide-react";
 import { type ClassCount, useClassCounts } from "../../../data/overview/useClassCounts";
 import { formatCount } from "../../../lib/format";
 import { type TaxonomyNode, taxonomyTree } from "../../../model/overview/taxonomyTree";
-import { type BarNode, BarTree, Box, Flex, Grid, Heading, Section, Spinner } from "../../../ui";
+import { type BarNode, BarTree, Box, Flex, Grid, Section, Spinner, SubHeading } from "../../../ui";
 
 const toBar = (node: TaxonomyNode): BarNode => ({
   id: node.path ?? "unclassified",
@@ -39,23 +39,10 @@ export default function ClassesSection() {
   );
 }
 
-function Column({
-  icon: Icon,
-  title,
-  nodes,
-}: {
-  icon: typeof BoxIcon;
-  title: string;
-  nodes: BarNode[];
-}) {
+function Column({ icon, title, nodes }: { icon: typeof BoxIcon; title: string; nodes: BarNode[] }) {
   return (
     <Box>
-      <Flex align="center" gap="2" mb="3" style={{ color: "var(--gray-11)" }}>
-        <Icon size={15} aria-hidden />
-        <Heading as="h3" size="2">
-          {title}
-        </Heading>
-      </Flex>
+      <SubHeading icon={icon} title={title} />
       <BarTree nodes={nodes} format={formatCount} openDepth={2} />
     </Box>
   );

@@ -19,6 +19,11 @@ class SocelWriteError(SocelError):
     """The sOCEL breaks a constraint its SQLite serialization declares."""
 
 
+class LineageError(SocelError, ValueError):
+    """The chosen O2O relation and mass do not make a lineage of handling units
+    (Definition 6.3.3): a unit with several parents, a cycle, or a missing mass."""
+
+
 class InvalidClassError(SocelError, ValueError):
     """A string is no dot-separated class path, e.g. `pr..x` (for TaxonomyPath).
 

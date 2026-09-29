@@ -1,5 +1,6 @@
 import { defineModule, defineModuleRoute } from "@ocelescope/core";
 import WaveIcon from "./assets/WaveIcon";
+import AnalysisPage from "./routes/AnalysisPage";
 import OceanPage from "./routes/OceanPage";
 import OverviewPage from "./routes/OverviewPage";
 
@@ -16,6 +17,12 @@ export default defineModule({
       label: "Overview",
       requiresOcel: true,
       component: OverviewPage,
+    }),
+    defineModuleRoute({
+      name: "analysis",
+      label: "Analysis",
+      requiresOcel: true,
+      component: AnalysisPage,
     }),
     defineModuleRoute({
       name: "ocean",
