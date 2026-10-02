@@ -1,67 +1,73 @@
 # sOCEL backend module
 
-Sustainability analysis for Ocelescope. Mounted at `/modules/socel/v1`; each
-page of the module has its own slice with its own API prefix. For now there is
-one: OCEAn, the object-centric emission analysis ported from the original OCEAn
-to work directly on Ocelescope's `OCEL` (polars), under `/ocean`.
+Sustainability analysis of object-centric event logs for Ocelescope, mounted at
+`/modules/socel/v1`. The sOCEL model and its computations live in the `socel`
+library (`packages/sOCEL`); this module puts them behind an API. It is one hexagon,
+organised by resource, not by page: pages are the frontend's concern, and a
+page uses whichever resources it needs.
 
 ```
 src/ocelescope_module_socel/
-├── module.py            Socel(Module): builds the FastAPI app, mounts each slice's router
-├── ocean/               OCEAn, one slice:
-│   ├── domain/
-│   │   ├── models/        immutable data only: rules, factors, results, config
-│   │   ├── services/      OCEAn's computations as pure functions on that data
-│   │   └── exceptions.py
-│   ├── application/
-│   │   ├── ports/         interfaces the use cases need (e.g. EmissionsRepository)
-│   │   └── use_cases/     one file per action: its Command, the use case, its result
-│   ├── infrastructure/    adapters implementing the ports (e.g. session storage)
-│   └── api/
-│       ├── router.py        the slice's endpoints, under /ocean
-│       ├── dependencies.py  composition root: builds use cases with their adapters
-│       ├── schema.py        ApiModel: camelCase base of all request/response models
-│       ├── exception_handlers.py  domain errors -> HTTP status codes
-│       └── routes/          endpoints; request/response models live next to their route
-├── ocel_utils/          generic OCEL helpers (e.g. attribute values at event time)
-└── ocel_graph/          object graph + nearest-target search (rustworkx)
-                         ocel_utils and ocel_graph are independent of the module -
-                         candidates for Ocelescope core
+├── module.py            Socel(Module): builds the FastAPI app, mounts the router
+├── domain/
+│   └── models/            immutable data only: what the use cases return
+├── application/
+│   └── use_cases/         one file per action: the use case, built with what it works on
+└── api/
+    ├── router.py          every resource's routes, under /{ocel_id}/...
+    ├── dependencies.py    composition root: builds use cases with their adapters
+    ├── schema.py          ApiModel: camelCase base of all request/response models
+    └── routes/            one file per resource; its request/response models next to it
 ```
+
+Resources: `status`, `flows`, `classes`.
+
+## The sOCEL extension
+
+The module declares `extensions = [SOCEL]` (`module.py`). The host then
+recognizes sOCELs among the logs - `SOCEL.from_ocel` validates a log against the
+conformance rules - and lists the extension in a log's metadata, which the
+frontend reads. Endpoints ask for `ApiSocel` (`api/dependencies.py`) and get the
+validated `SOCEL`; a log that is none is rejected with HTTP 422 before the use
+case is built, so use cases never check for it. The frontend guards its pages
+the same way (`requiresExtensions`), so they only open on an sOCEL.
+
+A log is downloaded through Ocelescope's own download, which keeps the sOCEL
+tables; the module has no export of its own (the request's log is read-only).
+
+`legacy/ocean/` holds OCEAn, the earlier object-centric emission analysis. It is
+parked: not packaged, not mounted and not checked (see its README).
 
 ## Rules
 
-- `module.py` mounts the slices; slices use the shared `ocel_utils`/`ocel_graph`, never the other way round.
-- Within a slice, dependencies point inwards: `api` -> `application` -> `domain`.
-- `domain` and `application` never import `fastapi` or `ocelescope_backend`.
-- Domain models carry data, no logic: they cannot import the OCEL or a service.
-- Logic that encodes OCEAn's rules is a function in `domain/services/`; logic
-  useful for any OCEL analysis goes to `ocel_utils/` or `ocel_graph/`, which
-  import nothing from the module.
-- Routes never import adapters; they get use cases from `api/dependencies.py`.
-- An endpoint only builds a command, runs its use case and maps the result.
-- Domain results are collected polars frames, never lazy: the request's OCEL is
-  closed when the request ends.
+- Dependencies point inwards: `module` -> `api` -> `application` -> `domain`.
+  A use case that needs something from outside declares a port in
+  `application/ports/`; its adapter goes in `infrastructure/`, between `api` and
+  `application`. Neither exists yet.
+- `domain` and `application` never import `fastapi`, `ocelescope_backend` or
+  `pydantic`: plain dataclasses.
+- Routes get their use cases from `api/dependencies.py`, never build them.
+- An endpoint only runs its use case and maps the result. A use case that takes
+  input gets it as a `<Action>Command` dataclass, defined next to it.
+- Computations on an sOCEL belong in the `socel` library, not here.
+- Use cases return finished data, nothing lazy: the request's OCEL is closed when
+  the request ends.
 
 `pnpm run check:backend` (repository root) runs ruff, pyright and
 import-linter; the rules above are import-linter contracts in `pyproject.toml`.
 
-## Adding an endpoint (to OCEAn; paths below are inside `ocean/`)
+## Adding an endpoint
 
-1. New data in `domain/models/`, new computation as functions in `domain/services/`.
-2. `application/use_cases/<action>.py`: `<Action>Command`, the use case class
-   with `execute(...)`, and its result model.
+1. New data in `domain/models/`.
+2. `application/use_cases/<action>.py`: the use case class with `execute(...)`,
+   and its `<Action>Command` if it takes input. Errors of its own go in
+   `domain/exceptions.py`, mapped to HTTP statuses by a handler registered in
+   `module.py` (neither exists yet: no use case raises one).
 3. A port in `application/ports/` if the use case needs something from outside.
-   Its adapter goes in `infrastructure/`.
+   Its adapter goes in `infrastructure/` (add the import contract named in
+   `pyproject.toml` then).
 4. `api/dependencies.py`: a `get_<action>` function building the use case.
-5. `api/routes/<feature>.py`: request/response models (`ApiModel`) and the
+5. `api/routes/<resource>.py`: request/response models (`ApiModel`) and the
    route with a stable `operation_id` (it names the generated frontend hook);
    a new routes file is included in `api/router.py`.
 6. `pnpm --filter @instance/socel-module build` regenerates the frontend client.
-
-## Adding a page
-
-A new page gets a slice next to `ocean/` with the same four layers, its own
-`api/router.py` with its prefix, and is mounted in `module.py`. Add it to the
-two layers contracts in `pyproject.toml` (the module-level `layers` and the
-slices' `containers`); slices do not import each other.

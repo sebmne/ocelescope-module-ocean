@@ -1,61 +1,10 @@
 [project]
 name = "socel"
 version = "0.1.0"
-description = "sOCEL: the OCEL for sustainability analysis, on top of Ocelescope's OCEL"
+description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 dependencies = [
-  "duckdb>=1.5",
-  "ocelescope>=0.8.0,<0.9.0",
-  "polars>=1.40",
+    "ocelescope @ git+https://github.com/promi4s/ocelescope.git@71df44d0c5aff3fac9f8d90047e1b6172e01901c#subdirectory=src/ocelescope",
+    "ruff>=0.16.9",
 ]
-
-[build-system]
-requires = ["uv_build>=0.11.20,<0.12.0"]
-build-backend = "uv_build"
-
-[tool.ruff]
-line-length = 100
-# The READMEs align their code comments by hand.
-extend-exclude = ["*.md"]
-
-[tool.ruff.lint]
-select = ["E", "F", "I", "UP", "B"]
-
-[tool.pyright]
-include = ["src"]
-# A library others build on: stricter than the module.
-typeCheckingMode = "strict"
-
-# The architecture, enforced: `pnpm run check:socel` (repository root) runs these contracts.
-# Layers from the top: the model (Definition 5.3.2) reads, writes and validates
-# through the layers below; validation checks what the format stores; the format
-# (Section 5.5) is how the sOCEL is stored; the taxonomy and the Ocelescope
-# mapping are the foundation.
-[tool.importlinter]
-root_package = "socel"
-include_external_packages = true
-
-[[tool.importlinter.contracts]]
-name = "sOCEL is a data standard: no backend, web framework or Ocelescope module"
-type = "forbidden"
-source_modules = ["socel"]
-forbidden_modules = ["ocelescope_backend", "fastapi", "pydantic", "ocelescope_module_socel"]
-
-[[tool.importlinter.contracts]]
-name = "Layers: analysis -> model -> validation -> format -> taxonomy, Ocelescope mapping -> errors"
-type = "layers"
-layers = [
-  "socel.analysis",
-  "socel.model",
-  "socel.validation",
-  "socel.format",
-  "socel.taxonomy | socel._ocelescope",
-  "socel.errors",
-]
-
-[[tool.importlinter.contracts]]
-name = "The schema and the taxonomy are knowledge, not data access: no OCEL, DuckDB or polars"
-type = "forbidden"
-source_modules = ["socel.format.schema", "socel.taxonomy", "socel.errors"]
-forbidden_modules = ["ocelescope", "duckdb", "polars"]

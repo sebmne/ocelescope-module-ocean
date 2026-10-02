@@ -4,7 +4,7 @@ import { useSelectedOcel } from "../useSelectedOcel";
 export type Flow = FlowModel;
 
 /** The flows of the selected sOCEL, each with its flow instances; only for an sOCEL. */
-export function useFlowInventory(isSocel: boolean) {
+export function useFlowInventory() {
   const { ocelId, enabled } = useSelectedOcel();
-  return useGetFlowInventory(ocelId, undefined, { query: { enabled: enabled && isSocel } });
+  return useGetFlowInventory(ocelId, undefined, { query: { enabled } });
 }

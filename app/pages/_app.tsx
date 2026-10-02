@@ -1,16 +1,7 @@
-// Third-party global styles the @ocelescope modules rely on. Import these
-// FIRST and in this order — @mantine/core must come before the others, and
-// every @ocelescope/* scoped stylesheet must come AFTER them so its overrides
-// win. Each @ocelescope package's README lists the styles it needs.
-import "@mantine/core/styles.css";
-import "@mantine/dates/styles.css";
-import "@mantine/charts/styles.css";
-import "@mantine/dropzone/styles.css";
-import "@mantine/notifications/styles.css";
-import "mantine-datatable/styles.css";
-import "@xyflow/react/dist/style.css";
-
-// @ocelescope packages' own (scoped) styles.
+// The only stylesheet the app needs: it inlines the third-party global CSS that
+// core and the Ocelescope modules rely on (Mantine and its extensions,
+// mantine-datatable, @xyflow/react, @r4pm/components) ahead of core's own styles,
+// in cascade order. A module that ships its own stylesheet is imported after it.
 import "@ocelescope/core/styles.css";
 
 import { OcelescopeApp } from "@ocelescope/core";

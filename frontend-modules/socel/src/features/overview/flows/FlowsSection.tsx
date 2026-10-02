@@ -1,7 +1,6 @@
 import { ChevronRightIcon, ExternalLinkIcon, GaugeIcon, TimerIcon, ZapIcon } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { type Flow, useFlowInventory } from "../../../data/overview/useFlowInventory";
-import { useSocelStatus } from "../../../data/overview/useSocelStatus";
 import { formatCount } from "../../../lib/format";
 import { Badge, Box, Flex, Grid, IconButton, Section, Spinner, Text, Tooltip } from "../../../ui";
 import ScopeTree from "./ScopeTree";
@@ -12,11 +11,8 @@ const COLUMNS = "24px minmax(0, 1fr) 64px 88px 48px 48px 32px";
 
 // The flows of the sOCEL; a row opens its flow instances as nested metering scopes.
 export default function FlowsSection() {
-  const isSocel = useSocelStatus().data?.isSocel ?? false;
-  const { data: flows } = useFlowInventory(isSocel);
+  const { data: flows } = useFlowInventory();
   const [open, setOpen] = useState<ReadonlySet<string>>(new Set());
-
-  if (!isSocel) return null;
 
   const toggle = (flowId: string) =>
     setOpen((current) => {

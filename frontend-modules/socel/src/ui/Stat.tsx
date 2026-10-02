@@ -9,30 +9,14 @@ interface StatProps {
   /** A short line below the number, e.g. its share of a total. */
   hint?: string;
   icon: LucideIcon;
-  /** The page's key figure: set in the accent colour. */
-  highlight?: boolean;
 }
 
 // One key figure: label, big number with unit, and a hint.
-export default function Stat({ label, value, unit, hint, icon: Icon, highlight }: StatProps) {
+export default function Stat({ label, value, unit, hint, icon: Icon }: StatProps) {
   return (
-    <Card
-      size="2"
-      style={
-        highlight
-          ? {
-              background: "linear-gradient(135deg, var(--accent-3), var(--accent-2))",
-              boxShadow: "inset 0 0 0 1px var(--accent-a5)",
-            }
-          : undefined
-      }
-    >
+    <Card size="2">
       <Flex direction="column" gap="2">
-        <Flex
-          align="center"
-          gap="2"
-          style={{ color: highlight ? "var(--accent-11)" : "var(--gray-11)" }}
-        >
+        <Flex align="center" gap="2" style={{ color: "var(--gray-11)" }}>
           <Icon size={15} aria-hidden />
           <Text size="2" weight="medium">
             {label}
@@ -42,20 +26,12 @@ export default function Stat({ label, value, unit, hint, icon: Icon, highlight }
           <Text
             size="7"
             weight="bold"
-            style={{
-              fontVariantNumeric: "tabular-nums",
-              letterSpacing: "-0.02em",
-              color: highlight ? "var(--accent-12)" : undefined,
-            }}
+            style={{ fontVariantNumeric: "tabular-nums", letterSpacing: "-0.02em" }}
           >
             {value}
           </Text>
           {unit && (
-            <Text
-              size="2"
-              color={highlight ? undefined : "gray"}
-              style={highlight ? { color: "var(--accent-11)" } : undefined}
-            >
+            <Text size="2" color="gray">
               {unit}
             </Text>
           )}

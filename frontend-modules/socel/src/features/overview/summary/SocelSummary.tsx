@@ -4,19 +4,18 @@ import {
   CalendarRangeIcon,
   CogIcon,
   DatabaseIcon,
-  DownloadIcon,
   GaugeIcon,
   NetworkIcon,
 } from "lucide-react";
-import { useExportSocel } from "../../../data/overview/useExportSocel";
 import { useSocelStatus } from "../../../data/overview/useSocelStatus";
+import { useSelectedOcel } from "../../../data/useSelectedOcel";
 import { formatCount, formatDuration, formatPeriod, parseUtc } from "../../../lib/format";
-import { Button, EmptyState, Flex, Grid, Notice, Section, Spinner, Stat } from "../../../ui";
+import { Flex, Grid, Section, Spinner, Stat } from "../../../ui";
 
 // What the selected sOCEL holds, and its download as SQLite.
 export default function SocelSummary() {
   const status = useSocelStatus().data;
-  const { download, isPending, error } = useExportSocel();
+  const name = useSelectedOcel().name ?? "sOCEL";
 
   if (!status) {
     return (
@@ -24,10 +23,6 @@ export default function SocelSummary() {
         <Spinner size="3" />
       </Flex>
     );
-  }
-
-  if (!status.isSocel) {
-    return <EmptyState icon={DatabaseIcon} title={`${status.ocelName} is no sOCEL`} />;
   }
 
   const period =
@@ -41,19 +36,7 @@ export default function SocelSummary() {
       : undefined;
 
   return (
-    <Section
-      icon={DatabaseIcon}
-      title={status.ocelName}
-      actions={
-        <Button
-          variant="soft"
-          loading={isPending}
-          onClick={() => download(`${status.ocelName}.sqlite`)}
-        >
-          <DownloadIcon size={15} aria-hidden /> SQLite
-        </Button>
-      }
-    >
+    <Section icon={DatabaseIcon} title={name}>
       <Grid columns={{ initial: "2", md: "3" }} gap={{ initial: "3", md: "4" }}>
         <Stat
           icon={BoxIcon}
@@ -82,7 +65,6 @@ export default function SocelSummary() {
         />
         <Stat icon={CalendarRangeIcon} label="Recorded period" {...(period ?? { value: "–" })} />
       </Grid>
-      {error && <Notice tone="error">{error}</Notice>}
     </Section>
   );
 }

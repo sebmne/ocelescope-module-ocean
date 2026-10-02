@@ -11,7 +11,10 @@
 	},
 	"dependencies": {
 		"@instance/socel-module": "workspace:*",
+		"@ocelescope/api-base": "catalog:",
+		"@ocelescope/api-client": "catalog:",
 		"@ocelescope/core": "catalog:",
+		"@ocelescope/resources": "catalog:",
 		"@ocelescope/management": "catalog:",
 		"@mantine/core": "catalog:",
 		"@mantine/dates": "catalog:",

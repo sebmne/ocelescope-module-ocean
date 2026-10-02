@@ -1,33 +1,19 @@
 from fastapi import FastAPI
 from ocelescope_backend.app.modules import Module, ModuleMeta
 from packaging.version import Version
+from socel import SOCEL
 
-from ocelescope_module_socel.analysis.api import router as analysis
-from ocelescope_module_socel.analysis.api.exception_handlers import (
-    register_exception_handlers as register_analysis_exception_handlers,
-)
-from ocelescope_module_socel.ocean.api import router as ocean
-from ocelescope_module_socel.ocean.api.exception_handlers import (
-    register_exception_handlers as register_ocean_exception_handlers,
-)
-from ocelescope_module_socel.overview.api import router as overview
-from ocelescope_module_socel.overview.api.exception_handlers import (
-    register_exception_handlers as register_overview_exception_handlers,
-)
+from ocelescope_module_socel.api import router
 
 
 class Socel(Module):
-    # Mounted at /modules/socel/v1; each page's API has its own prefix below that,
-    # e.g. /overview, /analysis or /ocean. The frontend's `generate:api` script uses this key.
+    # Mounted at /modules/socel/v1. The frontend's `generate:api` script uses this key.
     meta = ModuleMeta(key="socel", version=Version("1.0"))
+    # The host recognizes sOCELs among the logs by this extension, lists it in their
+    # metadata and hands it to the endpoints that ask for it (api/dependencies.py).
+    extensions = [SOCEL]
 
-    @classmethod
-    def create_app(cls) -> FastAPI:
-        app = FastAPI(title="sOCEL", version=str(cls.meta.version), docs_url=None, redoc_url=None)
-        register_overview_exception_handlers(app)
-        register_analysis_exception_handlers(app)
-        register_ocean_exception_handlers(app)
-        app.include_router(overview.router)
-        app.include_router(analysis.router)
-        app.include_router(ocean.router)
+    def create_app(self) -> FastAPI:
+        app = FastAPI(title="sOCEL", version=str(self.meta.version), docs_url=None, redoc_url=None)
+        app.include_router(router.router)
         return app

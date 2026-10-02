@@ -1,126 +1,172 @@
+"""Time-share attribution."""
+
 from dataclasses import dataclass
+from datetime import datetime
+from itertools import pairwise
+from math import isclose
 
-import polars as pl
-
-from socel._ocelescope import E2O, EID, OID, ident
-from socel.analysis._sql import is_top_level, share
-from socel.format.attributes import events_sql
-from socel.format.records import records_sql
-from socel.format.schema import CONTAINED_IN, EVENT_RECORDS, INTERVAL_RECORDS
-from socel.model.socel import SOCEL
+from socel.analysis.quantification import AnalysisWindow, _event_span, share
+from socel.domain import EventRecord, FlowInstance, IntervalRecord
+from socel.socel import SOCEL
 
 
-@dataclass(frozen=True, eq=False)
-class Attribution:
-    """The result of time-share attribution (Definition 6.2.1), per flow instance
-    with records.
+@dataclass(frozen=True, slots=True)
+class AttributionScope:
+    """The flow instance and optional operation set used for attribution."""
 
-    `by_event`: flow_id, object_id, event_id, quantity - attr_fi(e) > 0.
-    `by_instance`: flow_id, object_id, top_level, recorded, attributed, remainder -
-    recorded = attributed + remainder (u_fi) for every flow instance.
-    """
+    flow_instance: FlowInstance
+    eligible_operations: frozenset[str] | None = None
+    include_contained_operations: bool = False
 
-    by_event: pl.DataFrame
-    by_instance: pl.DataFrame
+    def __post_init__(self) -> None:
+        if self.eligible_operations is not None and any(
+            not event_id for event_id in self.eligible_operations
+        ):
+            raise ValueError("Eligible operation identifiers must not be empty.")
+        if self.eligible_operations is not None and self.include_contained_operations:
+            raise ValueError(
+                "Explicit eligible operations cannot be combined with contained "
+                "operations."
+            )
 
 
-def attribute(socel: SOCEL, *, group_metering: bool = True) -> Attribution:
-    """Attributes the records of every flow instance to its eligible operations.
+@dataclass(frozen=True, slots=True)
+class EventAttribution:
+    """The quantity attributed to one eligible operation."""
 
-    Event-linked records go to their event if it is eligible; interval records
-    are shared, per window between the eligible operations' starts and ends,
-    equally among the operations running throughout it (TDABC). An operation
-    needs an end time for a share of interval records. What reaches no eligible
-    operation is the remainder.
+    event_id: str
+    quantity: float
 
-    Eligible are the operations involving the flow instance's object (E_fi). With
-    `group_metering`, a flow instance whose contained instances carry no records
-    also takes the operations of its directly contained objects (Section 6.2,
-    group metering), as a line meter stands for its machines.
-    """
-    events = events_sql(socel.ocel)
-    records = records_sql(socel.ocel)
-    iv, er, ci = INTERVAL_RECORDS.name, EVENT_RECORDS.name, CONTAINED_IN.name
 
-    widened = f"""
-        UNION
-        SELECT fi.flow_id, fi.object_id, o.event_id
-        FROM fi
-        JOIN {ci} c ON c.flow_id = fi.flow_id AND c.parent_object_id = fi.object_id
-        JOIN ops o ON o.object_id = c.object_id
-        WHERE NOT EXISTS (
-            SELECT 1 FROM {ci} c2 JOIN fi f2
-              ON f2.flow_id = c2.flow_id AND f2.object_id = c2.object_id
-            WHERE c2.flow_id = fi.flow_id AND c2.parent_object_id = fi.object_id)
-    """
-    by_event = socel.sql(f"""
-        WITH ev AS ({events}),
-        fi AS (SELECT DISTINCT flow_id, object_id FROM ({records})),
-        ops AS (
-            SELECT DISTINCT x.{ident(OID)} AS object_id, ev.event_id
-            FROM {E2O} x JOIN ev ON ev.event_id = x.{ident(EID)}
-            WHERE ev.is_operation
-        ),
-        eligible AS (
-            SELECT fi.flow_id, fi.object_id, o.event_id
-            FROM fi JOIN ops o ON o.object_id = fi.object_id
-            {widened if group_metering else ""}
-        ),
-        d AS (
-            SELECT el.flow_id, el.object_id, el.event_id, ev.time AS s, ev.end_time AS t
-            FROM eligible el JOIN ev ON ev.event_id = el.event_id
-            WHERE ev.end_time IS NOT NULL
-        ),
-        bp AS (
-            SELECT flow_id, object_id, s AS p FROM d
-            UNION SELECT flow_id, object_id, t FROM d
-        ),
-        win AS (
-            SELECT * FROM (
-                SELECT flow_id, object_id, p AS a,
-                       lead(p) OVER (PARTITION BY flow_id, object_id ORDER BY p) AS b
-                FROM bp)
-            WHERE b IS NOT NULL
-        ),
-        active AS (
-            SELECT w.flow_id, w.object_id, w.a, d.event_id,
-                   count(*) OVER (PARTITION BY w.flow_id, w.object_id, w.a) AS n
-            FROM win w JOIN d
-              ON d.flow_id = w.flow_id AND d.object_id = w.object_id
-             AND d.s <= w.a AND w.b <= d.t
-        ),
-        window_share AS (
-            SELECT w.flow_id, w.object_id, w.a,
-                   sum(i.quantity * {share("i.start_time", "i.end_time", "w.a", "w.b")}) AS q
-            FROM win w JOIN {iv} i
-              ON i.flow_id = w.flow_id AND i.object_id = w.object_id
-             AND i.start_time < w.b AND i.end_time > w.a
-            GROUP BY ALL
-        ),
-        shares AS (
-            SELECT a.flow_id, a.object_id, a.event_id, s.q / a.n AS q
-            FROM active a JOIN window_share s USING (flow_id, object_id, a)
-            UNION ALL
-            SELECT r.flow_id, r.object_id, r.event_id, r.quantity
-            FROM {er} r JOIN eligible el USING (flow_id, object_id, event_id)
+@dataclass(frozen=True, slots=True)
+class AttributionResult:
+    """Attributed event quantities and their unreconciled remainder."""
+
+    events: tuple[EventAttribution, ...]
+    unattributed: float
+    recorded: float
+
+    def __post_init__(self) -> None:
+        event_ids = [event.event_id for event in self.events]
+        if len(event_ids) != len(set(event_ids)):
+            raise ValueError("An attribution result must contain each event once.")
+        if not isclose(
+            self.attributed + self.unattributed,
+            self.recorded,
+            rel_tol=1e-12,
+            abs_tol=1e-12,
+        ):
+            raise ValueError("Attributed and unattributed quantities must reconcile.")
+
+    @property
+    def attributed(self) -> float:
+        """The quantity assigned to eligible operations."""
+        return sum(event.quantity for event in self.events)
+
+    def for_event(self, event_id: str) -> float:
+        """Return the attributed quantity of an event, or zero if absent."""
+        return next(
+            (event.quantity for event in self.events if event.event_id == event_id),
+            0.0,
         )
-        SELECT flow_id, object_id, event_id, sum(q) AS quantity
-        FROM shares GROUP BY ALL HAVING sum(q) <> 0
-        ORDER BY flow_id, object_id, event_id
-    """).pl()
 
-    recorded = socel.sql(f"""
-        SELECT r.flow_id, r.object_id, {is_top_level("r")} AS top_level,
-               sum(r.quantity) AS recorded
-        FROM ({records}) r GROUP BY ALL
-    """).pl()
-    attributed = by_event.group_by("flow_id", "object_id").agg(
-        pl.col("quantity").sum().alias("attributed")
+
+def attribute(socel: SOCEL, scope: AttributionScope) -> AttributionResult:
+    """Attribute the records of one flow instance to eligible operations."""
+    records = socel.measurements.for_instance(scope.flow_instance)
+    eligible = (
+        scope.eligible_operations
+        if scope.eligible_operations is not None
+        else _default_eligible_operations(
+            socel,
+            scope.flow_instance,
+            scope.include_contained_operations,
+        )
     )
-    by_instance = (
-        recorded.join(attributed, on=["flow_id", "object_id"], how="left")
-        .with_columns(pl.col("attributed").fill_null(0.0))
-        .with_columns((pl.col("recorded") - pl.col("attributed")).alias("remainder"))
-        .sort("flow_id", "object_id")
+    quantities = {event_id: 0.0 for event_id in sorted(eligible)}
+
+    for record in records:
+        if isinstance(record, EventRecord) and record.event_id in quantities:
+            quantities[record.event_id] += record.quantity
+
+    intervals = tuple(
+        record for record in records if isinstance(record, IntervalRecord)
     )
-    return Attribution(by_event=by_event, by_instance=by_instance)
+    spans = _duration_spans(socel, eligible)
+    for window in _windows(spans):
+        active = tuple(
+            event_id
+            for event_id, (start, end) in spans.items()
+            if start <= window.start and window.end <= end
+        )
+        if not active:
+            continue
+
+        window_quantity = sum(
+            (share(socel, record, window) for record in intervals),
+            start=0.0,
+        )
+        event_share = window_quantity / len(active)
+        for event_id in active:
+            quantities[event_id] += event_share
+
+    recorded = sum((record.quantity for record in records), start=0.0)
+    attributed = sum(quantities.values())
+    return AttributionResult(
+        events=tuple(
+            EventAttribution(event_id, event_quantity)
+            for event_id, event_quantity in quantities.items()
+        ),
+        unattributed=recorded - attributed,
+        recorded=recorded,
+    )
+
+
+def _default_eligible_operations(
+    socel: SOCEL,
+    instance: FlowInstance,
+    include_contained: bool,
+) -> frozenset[str]:
+    object_ids = {instance.object_id}
+    if include_contained:
+        object_ids.update(
+            child.object_id for child in socel.flow_instances.children(instance)
+        )
+    return frozenset(
+        event_id
+        for object_id in object_ids
+        for event_id in _operations_for_object(socel, object_id)
+    )
+
+
+def _operations_for_object(socel: SOCEL, object_id: str) -> tuple[str, ...]:
+    event_ids = (
+        str(event_id) for event_id in socel.ocel.e2o.get_events_of_object(object_id)
+    )
+    return tuple(
+        event_id
+        for event_id in event_ids
+        if (class_name := socel.classifications.event_class(event_id)) is not None
+        and socel.taxonomies.event_classes.is_a(class_name, "op")
+    )
+
+
+def _duration_spans(
+    socel: SOCEL,
+    event_ids: frozenset[str],
+) -> dict[str, tuple[datetime, datetime]]:
+    spans: dict[str, tuple[datetime, datetime]] = {}
+    for event_id in event_ids:
+        start, end = _event_span(socel, event_id)
+        if end is not None:
+            spans[event_id] = (start, end)
+    return spans
+
+
+def _windows(
+    spans: dict[str, tuple[datetime, datetime]],
+) -> tuple[AnalysisWindow, ...]:
+    breakpoints = sorted(
+        {timestamp for start, end in spans.values() for timestamp in (start, end)}
+    )
+    return tuple(AnalysisWindow(start, end) for start, end in pairwise(breakpoints))

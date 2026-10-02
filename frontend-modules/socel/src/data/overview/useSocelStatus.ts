@@ -3,7 +3,7 @@ import { useSelectedOcel } from "../useSelectedOcel";
 
 export type SocelStatus = SocelStatusModel;
 
-/** Whether the selected OCEL is an sOCEL, and what it holds (counts only). */
+/** What the selected sOCEL holds, in counts; asked only for an sOCEL. */
 export function useSocelStatus() {
   const { ocelId, enabled } = useSelectedOcel();
   return useGetSocelStatus(ocelId, undefined, { query: { enabled } });

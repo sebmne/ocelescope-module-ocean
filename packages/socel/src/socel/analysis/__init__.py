@@ -1,35 +1,67 @@
-"""Chapter 6: what the recorded exchanges say. Functions of an sOCEL, returning frames:
+"""Free functions for sustainability analysis over an sOCEL."""
 
-- 6.1 flow quantities over time: `flow_quantities`
-- 6.2 attribution to operations: `attribute`
-- 6.3 allocation to handling units: `allocate`; along their lineage: `parents`,
-  `creation_values`, `carry` (with `unit_relation_qualifiers` and `unit_attributes`
-  as the choices for its parameters)
-- 6.4 impact: `impact`
-"""
-
-from socel.analysis.allocation import Allocation, allocate
-from socel.analysis.attribution import Attribution, attribute
-from socel.analysis.impact import impact
-from socel.analysis.lineage import (
+from socel.analysis.allocation import (
+    AllocationParameters,
+    AllocationResult,
+    CarriedQuantityResult,
+    FlowAllocation,
+    FlowCarriedQuantity,
+    FlowEventQuantity,
+    FlowSelection,
+    HandlingUnitQuantity,
+    LineageDefinition,
+    allocate,
     carry,
-    creation_values,
-    parents,
-    unit_attributes,
-    unit_relation_qualifiers,
+    event_quantities,
 )
-from socel.analysis.quantities import flow_quantities
+from socel.analysis.attribution import (
+    AttributionResult,
+    AttributionScope,
+    EventAttribution,
+    attribute,
+)
+from socel.analysis.impact import (
+    AllocatedImpactResult,
+    EventImpact,
+    EventImpactResult,
+    HandlingUnitImpact,
+    ImpactFactors,
+    ProductFootprintResult,
+    impact_allocations,
+    impact_events,
+    impact_quantity,
+    product_footprints,
+)
+from socel.analysis.quantification import AnalysisWindow, quantity, share
 
 __all__ = [
-    "Allocation",
-    "Attribution",
+    "AllocatedImpactResult",
+    "AllocationParameters",
+    "AllocationResult",
+    "AnalysisWindow",
+    "AttributionResult",
+    "AttributionScope",
+    "CarriedQuantityResult",
+    "EventAttribution",
+    "EventImpact",
+    "EventImpactResult",
+    "FlowAllocation",
+    "FlowCarriedQuantity",
+    "FlowEventQuantity",
+    "FlowSelection",
+    "HandlingUnitImpact",
+    "HandlingUnitQuantity",
+    "ImpactFactors",
+    "LineageDefinition",
+    "ProductFootprintResult",
     "allocate",
     "attribute",
     "carry",
-    "creation_values",
-    "flow_quantities",
-    "unit_relation_qualifiers",
-    "impact",
-    "parents",
-    "unit_attributes",
+    "event_quantities",
+    "impact_allocations",
+    "impact_events",
+    "impact_quantity",
+    "product_footprints",
+    "quantity",
+    "share",
 ]

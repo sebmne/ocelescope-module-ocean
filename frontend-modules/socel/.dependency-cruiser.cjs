@@ -1,8 +1,8 @@
 // The frontend's architecture, enforced (the counterpart of the backend's
 // import-linter contracts). Run: pnpm --filter @instance/socel-module check:architecture
 //
-// Like the backend, the module is made of page slices (for now OCEAn, `ocean/`):
-// features/, data/ and model/ group their code per page, e.g. features/ocean/.
+// The module is made of page slices: features/, data/ and model/ group their code
+// per page, e.g. features/overview/. (The backend is not split by page.)
 // Files directly in data/ or model/ are shared by all pages.
 //
 //   index.ts     the module's pages and navigation

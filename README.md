@@ -63,7 +63,7 @@ Ocelescope docs describe.
 
 The frontend layout of `frontend-modules/socel` is described at the top of its
 `.dependency-cruiser.cjs`, which also enforces it: routes compose features,
-features, data and model are grouped per page (e.g. `ocean/`), and `ui/` is the
+features, data and model are grouped per page (e.g. `overview/`), and `ui/` is the
 only place that knows the component library.
 
 ### Dependency versions
