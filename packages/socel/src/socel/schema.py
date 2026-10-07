@@ -12,6 +12,15 @@ class Column:
     type: LogicalType
     nullable: bool = False
 
+    @property
+    def database_type(self) -> str:
+        """The DuckDB type used to declare this column to Ocelescope."""
+        return {
+            "text": "VARCHAR",
+            "real": "DOUBLE",
+            "timestamp": "TIMESTAMP",
+        }[self.type]
+
 
 @dataclass(frozen=True)
 class Table:

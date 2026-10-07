@@ -1,109 +1,43 @@
-// The frontend's architecture, enforced (the counterpart of the backend's
-// import-linter contracts). Run: pnpm --filter @instance/socel-module check:architecture
+// The frontend's structure, enforced.
+// Run: pnpm --filter @instance/socel-module check:architecture
 //
-// The module is made of page slices: features/, data/ and model/ group their code
-// per page, e.g. features/overview/. (The backend is not split by page.)
-// Files directly in data/ or model/ are shared by all pages.
+// Code is grouped by feature: a feature folder holds its components, its hooks
+// and its helpers together. What several features need moves up into the shared
+// folders.
 //
-//   index.ts     the module's pages and navigation
-//   routes/      one file per route: a Page composing features
-//   features/    self-contained capabilities per page, each with an index.ts as its entry
-//   data/        the only place that talks to the backend (generated api/)
-//   model/       the frontend's state as pure types and functions
-//   ui/          the module's design language: the only place that knows the component library
-//   components/  generic UI with its own life, e.g. the pickers
-//   lib/         technical helpers
+//   index.ts      the module's pages and navigation
+//   pages/        one file per page, composing features
+//   features/     one folder per feature, everything it needs inside
+//   components/   the shared building blocks and the module's look
+//   hooks/        shared hooks
+//   lib/          generic helpers
+//   api/          the generated backend client
 /** @type {import('dependency-cruiser').IConfiguration} */
 module.exports = {
   forbidden: [
-    // ---- Routes, page slices and features -----------------------------------
-    {
-      name: "features-do-not-know-routes",
-      comment: "Routes compose features; a feature never depends on a route.",
-      severity: "error",
-      from: { path: "^src/features/" },
-      to: { path: "^src/routes/" },
-    },
     {
       name: "features-are-independent",
       comment:
-        "A feature does not import another feature. Features connect through data/ " +
-        "(e.g. results read what the rules computed) and model/.",
+        "A feature does not import another feature. What two features share moves " +
+        "to components/, hooks/ or lib/.",
       severity: "error",
-      from: { path: "^src/features/([^/]+/[^/]+)/" },
+      from: { path: "^src/features/([^/]+)/" },
       to: { path: "^src/features/", pathNot: "^src/features/$1/" },
     },
     {
-      name: "features-only-through-their-entry",
-      comment: "Outside a feature, only its index.ts may be imported; its insides are private.",
+      name: "shared-code-knows-no-feature",
+      comment: "components/, hooks/ and lib/ serve the features and pages, never the reverse.",
       severity: "error",
-      from: { pathNot: "^src/features/" },
-      to: {
-        path: "^src/features/[^/]+/[^/]+/.+",
-        pathNot: "^src/features/[^/]+/[^/]+/index\\.ts$",
-      },
+      from: { path: "^src/(components|hooks|lib)/" },
+      to: { path: "^src/(features|pages)/" },
     },
     {
-      name: "page-slices-are-independent",
+      name: "component-library-only-in-components",
       comment:
-        "One page's features, data and model do not reach into another page's. " +
-        "What pages share lives directly in data/, model/, ui/, components/ or lib/.",
+        "Only components/ imports Radix (via r4pm) and Mantine, so the look stays in " +
+        "one place. Pickers and charts come from @ocelescope/core.",
       severity: "error",
-      from: { path: "^src/(?:features|data|model)/([^/]+)/" },
-      to: {
-        path: "^src/(?:features|data|model)/[^/]+/",
-        pathNot: "^src/(?:features|data|model)/$1/",
-      },
-    },
-
-    // ---- Layers -------------------------------------------------------------
-    {
-      name: "api-only-through-data",
-      comment: "Only data/ uses the generated client; everything else asks data/.",
-      severity: "error",
-      from: { path: "^src/", pathNot: "^src/(data|api)/" },
-      to: { path: "^src/api/" },
-    },
-    {
-      name: "model-is-pure",
-      comment: "model/ holds plain types and functions: no React, no backend, no screens.",
-      severity: "error",
-      from: { path: "^src/model/" },
-      to: {
-        path: [
-          "^src/(api|data|routes|features|ui|lib)/",
-          "(^|/)node_modules/(react|react-dom|@tanstack|@mantine|@radix-ui)/",
-        ],
-      },
-    },
-    {
-      name: "data-knows-no-ui",
-      comment: "data/ serves the screens but does not know them.",
-      severity: "error",
-      from: { path: "^src/data/" },
-      to: { path: "^src/(routes|features|ui|components)/" },
-    },
-    {
-      name: "ui-is-design-only",
-      comment: "ui/ is the design language: no data access, no state of the app, no screens.",
-      severity: "error",
-      from: { path: "^src/ui/" },
-      to: { path: "^src/(routes|features|data|model|api)/" },
-    },
-    {
-      name: "components-are-generic",
-      comment: "components/ can be used by any feature: no screens, data access or app state.",
-      severity: "error",
-      from: { path: "^src/components/" },
-      to: { path: "^src/(routes|features|data|model)/" },
-    },
-    {
-      name: "component-library-only-in-ui",
-      comment:
-        "Screens are built from ui/, which alone knows Radix (via r4pm) and Mantine. " +
-        "The pickers are exempt: they are their own library, meant for Ocelescope core.",
-      severity: "error",
-      from: { path: "^src/", pathNot: "^src/(ui|components/pickers)/" },
+      from: { path: "^src/", pathNot: "^src/components/" },
       to: {
         path: [
           "(^|/)node_modules/@mantine/",

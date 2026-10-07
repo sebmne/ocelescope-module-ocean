@@ -1,8 +1,0 @@
-import { useGetEmissionsOverview } from "../../api/socel";
-import { useSelectedOcel } from "../useSelectedOcel";
-
-/** Totals of the emissions computed for the selected OCEL. */
-export function useEmissionsOverview() {
-  const { ocelId, enabled } = useSelectedOcel();
-  return useGetEmissionsOverview(ocelId, { query: { enabled } });
-}

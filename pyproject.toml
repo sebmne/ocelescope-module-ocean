@@ -16,16 +16,24 @@ dev = [
   "ruff>=0.12",
 ]
 
+# For an editor opened on the repository root. legacy/ is written against
+# Ocelescope 0.8 and is not installed, so it cannot type-check here. The mode is
+# set explicitly: basedpyright (Zed) otherwise switches to its strictest mode as
+# soon as this section exists.
+[tool.pyright]
+typeCheckingMode = "standard"
+exclude = ["**/node_modules", "**/__pycache__", "**/.*", "legacy"]
+
 [tool.uv.workspace]
 members = ["backend-modules/*", "packages/*"]
 
 [tool.uv.sources]
 # Unreleased: the branch feat/ocel-extensions of promi4s/ocelescope (0.10.1 plus
 # OCEL extensions - modules declare `extensions`, endpoints receive them through
-# `get_ocel_extension`). All packages from the same commit, the one the socel
+# `ocel_as`). All packages from the same commit, the one the socel
 # library pins too.
-ocelescope = { git = "https://github.com/promi4s/ocelescope", rev = "71df44d0c5aff3fac9f8d90047e1b6172e01901c", subdirectory = "src/ocelescope" }
-ocelescope-backend = { git = "https://github.com/promi4s/ocelescope", rev = "71df44d0c5aff3fac9f8d90047e1b6172e01901c", subdirectory = "src/backend/ocelescope-backend" }
-ocelescope-module-ocel = { git = "https://github.com/promi4s/ocelescope", rev = "71df44d0c5aff3fac9f8d90047e1b6172e01901c", subdirectory = "src/backend/modules/ocelescope-module-ocel" }
+ocelescope = { git = "https://github.com/promi4s/ocelescope", rev = "329e57c0089703d1738761eaa7040d412dbbdd41", subdirectory = "src/ocelescope" }
+ocelescope-backend = { git = "https://github.com/promi4s/ocelescope", rev = "329e57c0089703d1738761eaa7040d412dbbdd41", subdirectory = "src/backend/ocelescope-backend" }
+ocelescope-module-ocel = { git = "https://github.com/promi4s/ocelescope", rev = "329e57c0089703d1738761eaa7040d412dbbdd41", subdirectory = "src/backend/modules/ocelescope-module-ocel" }
 ocelescope-module-socel = { workspace = true }
 socel = { workspace = true }

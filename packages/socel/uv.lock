@@ -579,7 +579,7 @@ wheels = [
 [[package]]
 name = "ocelescope"
 version = "0.10.1"
-source = { git = "https://github.com/promi4s/ocelescope.git?subdirectory=src%2Focelescope&rev=71df44d0c5aff3fac9f8d90047e1b6172e01901c#71df44d0c5aff3fac9f8d90047e1b6172e01901c" }
+source = { git = "https://github.com/promi4s/ocelescope.git?subdirectory=src%2Focelescope&rev=78e3624e6974a5d61b5d897fc897b0dd44cf2f21#78e3624e6974a5d61b5d897fc897b0dd44cf2f21" }
 dependencies = [
     { name = "duckdb" },
     { name = "graphviz" },
@@ -1087,7 +1087,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "ocelescope", git = "https://github.com/promi4s/ocelescope.git?subdirectory=src%2Focelescope&rev=71df44d0c5aff3fac9f8d90047e1b6172e01901c" },
+    { name = "ocelescope", git = "https://github.com/promi4s/ocelescope.git?subdirectory=src%2Focelescope&rev=78e3624e6974a5d61b5d897fc897b0dd44cf2f21" },
     { name = "ruff", specifier = ">=0.16.9" },
 ]
 

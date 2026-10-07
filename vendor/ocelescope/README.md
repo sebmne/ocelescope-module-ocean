@@ -1,8 +1,9 @@
 # Vendored Ocelescope frontend packages
 
-`@ocelescope/core`, `@ocelescope/api-base` and `@ocelescope/management` from the
-branch `feat/ocel-extensions` of promi4s/ocelescope (commit 71df44d), which is
-0.10.1 plus OCEL extensions. They are the packages that differ from the
+`@ocelescope/core`, `@ocelescope/api-base`, `@ocelescope/management` and
+`@ocelescope/resources` from the branch `feat/ocel-extensions` of
+promi4s/ocelescope (commit 78e3624), which is 0.10.1 plus OCEL extensions and
+the new pickers and charts. They are the packages that differ from the
 published 0.10.1; everything else comes from npm. `pnpm-workspace.yaml` maps
 them in through `overrides`.
 
@@ -14,7 +15,7 @@ To refresh after a change on the branch, in a checkout of it:
 
 ```bash
 pnpm build:frontend
-for p in packages/core packages/api/base modules/management; do
+for p in packages/core packages/api/base packages/resources modules/management; do
   (cd src/frontend/$p && pnpm pack --pack-destination <this folder>)
 done
 ```

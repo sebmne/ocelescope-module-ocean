@@ -5,6 +5,6 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "ocelescope @ git+https://github.com/promi4s/ocelescope.git@71df44d0c5aff3fac9f8d90047e1b6172e01901c#subdirectory=src/ocelescope",
+    "ocelescope @ git+https://github.com/promi4s/ocelescope.git@329e57c0089703d1738761eaa7040d412dbbdd41#subdirectory=src/ocelescope",
     "ruff>=0.16.9",
 ]

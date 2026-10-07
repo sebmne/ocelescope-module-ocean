@@ -83,14 +83,12 @@ def _duration_share(
 def _event_span(socel: SOCEL, event_id: str) -> tuple[datetime, datetime | None]:
     event_columns = {
         str(row[0])
-        for row in socel.ocel.con.execute(
-            f"DESCRIBE {identifier(EVENTS_TABLE)}"
-        ).fetchall()
+        for row in socel.con.execute(f"DESCRIBE {identifier(EVENTS_TABLE)}").fetchall()
     }
     end_projection = (
         identifier(SOCEL_END_TIME) if SOCEL_END_TIME in event_columns else "NULL"
     )
-    row = socel.ocel.con.execute(
+    row = socel.con.execute(
         f"""
         SELECT {identifier(TIMESTAMP_COL)}, {end_projection}
         FROM {identifier(EVENTS_TABLE)}

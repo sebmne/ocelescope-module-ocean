@@ -1,6 +1,10 @@
 import { defineModule, defineModuleRoute } from "@ocelescope/core";
+import dynamic from "next/dynamic";
 import WaveIcon from "./assets/WaveIcon";
-import OverviewPage from "./routes/OverviewPage";
+
+// Pages are built from r4pm components, which load stylesheets and reach for
+// `document` as they are imported: they stay out of the server render.
+const OverviewPage = dynamic(() => import("./pages/OverviewPage"), { ssr: false });
 
 // The module's table of contents: every page, and how it appears in the navigation.
 export default defineModule({
@@ -12,8 +16,7 @@ export default defineModule({
     defineModuleRoute({
       name: "overview",
       label: "Overview",
-      requiresOcel: true,
-      requiresExtensions: ["socel"],
+      requiresOcel: ["socel"],
       component: OverviewPage,
     }),
   ],

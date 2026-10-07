@@ -33,9 +33,6 @@ catalogs:
     '@ocelescope/api-config':
       specifier: ^0.10.1
       version: 0.10.1
-    '@ocelescope/resources':
-      specifier: ^0.10.1
-      version: 0.10.1
     '@r4pm/components':
       specifier: ^0.3.2
       version: 0.3.2
@@ -64,8 +61,8 @@ catalogs:
       specifier: ^9.4.0
       version: 9.4.0
     next:
-      specifier: 16.3.6
-      version: 16.3.6
+      specifier: 16.3.8
+      version: 16.3.8
     orval:
       specifier: ^8.36.0
       version: 8.37.0
@@ -86,6 +83,7 @@ overrides:
   '@ocelescope/core': file:./vendor/ocelescope/ocelescope-core-0.10.1.tgz
   '@ocelescope/api-base': file:./vendor/ocelescope/ocelescope-api-base-0.10.1.tgz
   '@ocelescope/management': file:./vendor/ocelescope/ocelescope-management-0.10.1.tgz
+  '@ocelescope/resources': file:./vendor/ocelescope/ocelescope-resources-0.10.1.tgz
 
 importers:
 
@@ -123,13 +121,13 @@ importers:
         version: 0.10.1(axios@1.20.0(debug@4.4.3(supports-color@7.2.0))(supports-color@7.2.0))(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(zod@4.6.5)(zustand@5.0.15(@types/react@19.3.0)(immer@11.1.8)(react@19.3.0)(use-sync-external-store@1.6.0(react@19.3.0)))
       '@ocelescope/core':
         specifier: file:../vendor/ocelescope/ocelescope-core-0.10.1.tgz
-        version: file:vendor/ocelescope/ocelescope-core-0.10.1.tgz(2a268f0d92005eadceba5299532f4595)
+        version: file:vendor/ocelescope/ocelescope-core-0.10.1.tgz(2130c08f56d97502c1103093457503be)
       '@ocelescope/management':
         specifier: file:../vendor/ocelescope/ocelescope-management-0.10.1.tgz
-        version: file:vendor/ocelescope/ocelescope-management-0.10.1.tgz(4363ae650c81bd984c65476fa12d1377)
+        version: file:vendor/ocelescope/ocelescope-management-0.10.1.tgz(830c0c8e1d37359e1f3c30bb73efc42d)
       '@ocelescope/resources':
-        specifier: 'catalog:'
-        version: 0.10.1(466018fda3784dca5c6fba1ad1807ec9)
+        specifier: file:../vendor/ocelescope/ocelescope-resources-0.10.1.tgz
+        version: file:vendor/ocelescope/ocelescope-resources-0.10.1.tgz(a71bfdb6a4860d5dd73e3d8bf51ebdc5)
       '@xyflow/react':
         specifier: 'catalog:'
         version: 12.11.6(@types/react-dom@19.2.3(@types/react@19.3.0))(@types/react@19.3.0)(immer@11.1.8)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -138,7 +136,7 @@ importers:
         version: 9.4.0(@mantine/core@9.6.2(@mantine/hooks@9.6.2(react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(@mantine/hooks@9.6.2(react@19.3.0))(clsx@2.1.1)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       next:
         specifier: 'catalog:'
-        version: 16.3.6(@types/node@25.9.4)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+        version: 16.3.8(@types/node@25.9.4)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       react:
         specifier: 'catalog:'
         version: 19.3.0
@@ -169,7 +167,10 @@ importers:
         version: file:vendor/ocelescope/ocelescope-api-base-0.10.1.tgz(@ocelescope/api-client@0.10.1(axios@1.20.0(debug@4.4.3(supports-color@7.2.0))(supports-color@7.2.0))(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(zod@4.6.5)(zustand@5.0.15(@types/react@19.3.0)(immer@11.1.8)(react@19.3.0)(use-sync-external-store@1.6.0(react@19.3.0))))(@tanstack/react-query@5.103.2(react@19.3.0))(axios@1.20.0(debug@4.4.3(supports-color@7.2.0))(supports-color@7.2.0))(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       '@ocelescope/core':
         specifier: file:../../vendor/ocelescope/ocelescope-core-0.10.1.tgz
-        version: file:vendor/ocelescope/ocelescope-core-0.10.1.tgz(2a268f0d92005eadceba5299532f4595)
+        version: file:vendor/ocelescope/ocelescope-core-0.10.1.tgz(2130c08f56d97502c1103093457503be)
+      '@ocelescope/resources':
+        specifier: file:../../vendor/ocelescope/ocelescope-resources-0.10.1.tgz
+        version: file:vendor/ocelescope/ocelescope-resources-0.10.1.tgz(a71bfdb6a4860d5dd73e3d8bf51ebdc5)
     devDependencies:
       '@mantine/core':
         specifier: 'catalog:'
@@ -180,9 +181,6 @@ importers:
       '@ocelescope/api-config':
         specifier: 'catalog:'
         version: 0.10.1(@tanstack/react-query@5.103.2(react@19.3.0))(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(typescript@5.9.3)(zod@4.6.5)
-      '@ocelescope/resources':
-        specifier: 'catalog:'
-        version: 0.10.1(466018fda3784dca5c6fba1ad1807ec9)
       '@r4pm/components':
         specifier: 'catalog:'
         version: 0.3.2(@types/react-dom@19.2.3(@types/react@19.3.0))(@types/react@19.3.0)(immer@11.1.8)(plotly.js@3.6.0(mapbox-gl@1.13.3)(supports-color@7.2.0))(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -203,7 +201,7 @@ importers:
         version: 1.47.0(react@19.3.0)
       next:
         specifier: 'catalog:'
-        version: 16.3.6(@types/node@25.9.4)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+        version: 16.3.8(@types/node@25.9.4)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       orval:
         specifier: 'catalog:'
         version: 8.37.0(@tanstack/react-query@5.103.2(react@19.3.0))(typescript@5.9.3)(zod@4.6.5)
@@ -737,63 +735,63 @@ packages:
   '@marko19907/string-to-color@1.0.2':
     resolution: {integrity: sha512-kADXIfypDWoCnqvqAjvgTm7curpHoigUpPVXKQY5fP2hUFfX72xx5H7ga4T7CwdBmIbYrbvU4zU/Al2NWPD+qQ==}
 
-  '@next/env@16.3.6':
-    resolution: {integrity: sha512-x9Vblze1EbtltQYnNH38xCPWU3TVfBd1eXqA3+w9+BTpedkkdNpAaltXlGQ/nsc1+E0mVTNrtcbX3GoO09zeLQ==}
+  '@next/env@16.3.8':
+    resolution: {integrity: sha512-Al9zqHVV7TJv0eFuOU4U7Lvv74PTih4Ch63sk2xCIpSTkE3udFnaOcnzP2lQVymiL7yS9Cj2iClUXlR3EQ5sEw==}
 
-  '@next/swc-darwin-arm64@16.3.6':
-    resolution: {integrity: sha512-E/7GEqaUkt8mk/T8v9lAnrhzR06kdq1ZBkC12F8tAMkdIadwNp3H1KqHynDHrpcTlGCUdq/qu6vUL2aYVyYBdw==}
+  '@next/swc-darwin-arm64@16.3.8':
+    resolution: {integrity: sha512-2JPRMh2nmQG5CiL7cXGL9AGwnPWJQ//cTtAUCT+w511QHk79SYz3LGv/pc5X643B/WEO0rvu3Yww0hqwt3kgeA==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [darwin]
 
-  '@next/swc-darwin-x64@16.3.6':
-    resolution: {integrity: sha512-yBE893/nDWTlaiBD1p+qgt7NUen4U5R6FXyH0s67Npq1S3E0cVSef1WIXC2xBRgQvwAvJq6DnS6Y6PrY0cy4Ew==}
+  '@next/swc-darwin-x64@16.3.8':
+    resolution: {integrity: sha512-GZtCCOBKJ4leVIT/Th0llWKhD1ca92lzbQiS5R5ON9QkoiFnilFsebDae1JU2a3HWoKMEmEZWGs1AGLavVM72Q==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [darwin]
 
-  '@next/swc-linux-arm64-gnu@16.3.6':
-    resolution: {integrity: sha512-KJDpjBqBPYlvkivmyrp+Qys6k/7ksbqGQvRVc6ZEGfR+cjQxx+nUkJaWmNZJsmoOrqYNbaXByF8wa0lBwDhB3Q==}
+  '@next/swc-linux-arm64-gnu@16.3.8':
+    resolution: {integrity: sha512-O659ygeQYqneJ1fBKMpFxIFqYkYswu8IAS1OCKK/4f3ZgJJm1dRz4fVJZRi/kLLWjnBKnebOePA4WNv+sV1pVA==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [linux]
     libc: [glibc]
 
-  '@next/swc-linux-arm64-musl@16.3.6':
-    resolution: {integrity: sha512-mqNg2K+hvWskSRb/QM+Ix412DvBsuSF0XV+frTSw5vmoucNnIlynFwKYew8D01bfATErMOM7Bujrf0BA5DRKFA==}
+  '@next/swc-linux-arm64-musl@16.3.8':
+    resolution: {integrity: sha512-dSjKSyWpzxoO1d3DIZZcP4XJcNaKeLmxQMFOiYl5vuBRMmweIqnAhty8tAmRsvTss779cK1FtYnDMj40e4TQlg==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [linux]
     libc: [musl]
 
-  '@next/swc-linux-x64-gnu@16.3.6':
-    resolution: {integrity: sha512-nFncBNGAYouRHjRVaITs9beZRfhX4ssVwpnvPIAbkZVH6LtGoAVlH4bJ8Cnf9SOo9bsXgPFer/GdHtEE3JNOkw==}
+  '@next/swc-linux-x64-gnu@16.3.8':
+    resolution: {integrity: sha512-lbqOuz3RPRcv+o9msNsJw5x4+Y1ZwPTs6vmL6DCf7i0fZfvng/F59wyeDwqHIvV0mK//RBy/jJkZ+nCKsSMXjQ==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [linux]
     libc: [glibc]
 
-  '@next/swc-linux-x64-musl@16.3.6':
-    resolution: {integrity: sha512-5Mf3cHDGR/Iz0ng2Bj3zUR3p5QS9YK3Hn2QiAfavFmyF48zwThAjpFoiTKNIcOHLYS4zEk+gzyJ/9deQ2ZB8yQ==}
+  '@next/swc-linux-x64-musl@16.3.8':
+    resolution: {integrity: sha512-+316WswI8ScVgZeUd+1KGaXkHhaYQzCjvH/05TZSpJ8zBizb1a4G7DtO7F12jcBIqMOtsz9ji1t48fmKtzqsGA==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [linux]
     libc: [musl]
 
-  '@next/swc-win32-arm64-msvc@16.3.6':
-    resolution: {integrity: sha512-0jkJy0C2kbrJWTk4YLa3xk80pVBpx8FCHJym7CnUfDAXe/FWv5qT7SQJbR0KuemyxaEDlEx5WT4VQJoTW+/9Qw==}
+  '@next/swc-win32-arm64-msvc@16.3.8':
+    resolution: {integrity: sha512-ji0gd4kMYUxO+1fJBIbiBVRCjzG/lloiyCccnlebvb1ZJ5qXCPZqYg4Jl1DrrixnWNMKylzgpmMWx0yNDYXlzw==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [win32]
 
-  '@next/swc-win32-x64-msvc@16.3.6':
-    resolution: {integrity: sha512-/YXjI1e5OXcZ7YpxRwgP/1jAV/SBKTzeVKqN2mk7mLpcICsyn3Gl5+dIfDTJp70M0ccMhyMMRso4v6mPDCGepg==}
+  '@next/swc-win32-x64-msvc@16.3.8':
+    resolution: {integrity: sha512-WcTlaKt/TWkh5kUjdJcUmB1XgZ+1c6fz4Y9fDHL73YNSdGaUWjceeWrrlwF0nv19iABYWC4iAq1oX1w4Bn0vfg==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [win32]
 
   '@ocelescope/api-base@file:vendor/ocelescope/ocelescope-api-base-0.10.1.tgz':
-    resolution: {integrity: sha512-nNwFoXOZ7GbzMuZ5+eA9SWsw0aBI2xnf1W57V/1IAva4PNa6bJvpuJ4zZcgKRvJREng1PCGPUwIdxiDID37yBg==, tarball: file:vendor/ocelescope/ocelescope-api-base-0.10.1.tgz}
+    resolution: {integrity: sha512-S68PqESDxuydjqOCt8kr2QbuoL6Wk5JYsfsXkN207ZS35OYoBIAVbWl6MD3UttlsAfVpKq0ozVAgph+wnDWppQ==, tarball: file:vendor/ocelescope/ocelescope-api-base-0.10.1.tgz}
     version: 0.10.1
     peerDependencies:
       '@ocelescope/api-client': ^0.10.1
@@ -818,7 +816,7 @@ packages:
       react-dom: ^19.3.0
 
   '@ocelescope/core@file:vendor/ocelescope/ocelescope-core-0.10.1.tgz':
-    resolution: {integrity: sha512-XX7J2J672Jdy8O3/4l+Ri9x1gX2kmmvNs2OzDs7yEvzbsaYh7dnSaBZE8bb7rfC566xklWpVCcBcNKgmPkkHcg==, tarball: file:vendor/ocelescope/ocelescope-core-0.10.1.tgz}
+    resolution: {integrity: sha512-7paYEI9Vck0gK2FQk/4dc7ViSYiwHWgoIhBSqcnf0btYcI+IXcXjHPnvPL55yskV1nU8Nr3lKQdMknxYY2bLUw==, tarball: file:vendor/ocelescope/ocelescope-core-0.10.1.tgz}
     version: 0.10.1
     peerDependencies:
       '@mantine/core': ^9.5.1
@@ -838,7 +836,7 @@ packages:
       file-saver: ^2.0.5
       lucide-react: ^1.0.0
       mantine-datatable: ^9.4.0
-      next: 16.3.6
+      next: 16.3.8
       qs: ^6.16.0
       react: ^19.3.0
       react-dom: ^19.3.0
@@ -846,7 +844,7 @@ packages:
       zustand: ^5.0.15
 
   '@ocelescope/management@file:vendor/ocelescope/ocelescope-management-0.10.1.tgz':
-    resolution: {integrity: sha512-o+sFP4+bPJbK/5WRvcAq8n4VJR+1tBrPmNg9B3C6zmLUekuDLp12+u9wPbnsDZsGqvfY/miG5le+6RPZNLFX4Q==, tarball: file:vendor/ocelescope/ocelescope-management-0.10.1.tgz}
+    resolution: {integrity: sha512-dS+v2Vz2bVSCuyHeMYYJS1TYYN5rx+xwTomq2e/xIvlnpMKB/KnsriCed7ZJ7CpXkUC7NT3eEJmsutIcm1hN6g==, tarball: file:vendor/ocelescope/ocelescope-management-0.10.1.tgz}
     version: 0.10.1
     peerDependencies:
       '@mantine/core': ^9.5.1
@@ -861,8 +859,9 @@ packages:
       react: ^19.3.0
       react-dom: ^19.3.0
 
-  '@ocelescope/resources@0.10.1':
-    resolution: {integrity: sha512-J3y2kubcxwWjDYUk3pQD1eYnhEk3leGq7W0Yz2c2tLo0QDArZQYiiRe56m+3Xr3LsR96Rwn6O4whx+4/c4PuoA==}
+  '@ocelescope/resources@file:vendor/ocelescope/ocelescope-resources-0.10.1.tgz':
+    resolution: {integrity: sha512-356zsjwnGTVDd2oemKf9OKibO/X1dwvWQzRm3FQmjYJhPoMev0xAEQyzIELBLtN6kh+Mi/sB9BvGV6JkaXo9MA==, tarball: file:vendor/ocelescope/ocelescope-resources-0.10.1.tgz}
+    version: 0.10.1
     peerDependencies:
       '@floating-ui/react': ^0.27.18
       '@hpcc-js/wasm-graphviz': ^1.21.0
@@ -875,7 +874,7 @@ packages:
       file-saver: ^2.0.5
       lucide-react: ^1.0.0
       mantine-datatable: ^9.4.0
-      next: 16.3.6
+      next: 16.3.8
       react: ^19.3.0
       react-dom: ^19.3.0
       react-plotly.js: ^4.0.0
@@ -3189,8 +3188,8 @@ packages:
   next-tick@1.1.0:
     resolution: {integrity: sha512-CXdUiJembsNjuToQvxayPZF9Vqht7hewsvy2sOWafLvi2awflj9mOC6bHIg50orX8IJvWKY9wYQ/zB2kogPslQ==}
 
-  next@16.3.6:
-    resolution: {integrity: sha512-L+otWM/aQbYTx98aZhgEoMb4bZAXx1YVW4UMA/vuCyCoWG5HJyZUili8QAkqzrcC+5///tsz3s0M+SlyB5bLMw==}
+  next@16.3.8:
+    resolution: {integrity: sha512-U7QEZaTini6wKrb8A8hqLLqYQyCetegKjCpJOyxk642vWoMoU1x5PyZCJFvgYgiptA8xc5j/9xYlZFO7w9Sjmw==}
     engines: {node: '>=20.9.0'}
     hasBin: true
     peerDependencies:
@@ -4393,30 +4392,30 @@ snapshots:
     dependencies:
       esm-seedrandom: 3.0.5-esm.2
 
-  '@next/env@16.3.6': {}
+  '@next/env@16.3.8': {}
 
-  '@next/swc-darwin-arm64@16.3.6':
+  '@next/swc-darwin-arm64@16.3.8':
     optional: true
 
-  '@next/swc-darwin-x64@16.3.6':
+  '@next/swc-darwin-x64@16.3.8':
     optional: true
 
-  '@next/swc-linux-arm64-gnu@16.3.6':
+  '@next/swc-linux-arm64-gnu@16.3.8':
     optional: true
 
-  '@next/swc-linux-arm64-musl@16.3.6':
+  '@next/swc-linux-arm64-musl@16.3.8':
     optional: true
 
-  '@next/swc-linux-x64-gnu@16.3.6':
+  '@next/swc-linux-x64-gnu@16.3.8':
     optional: true
 
-  '@next/swc-linux-x64-musl@16.3.6':
+  '@next/swc-linux-x64-musl@16.3.8':
     optional: true
 
-  '@next/swc-win32-arm64-msvc@16.3.6':
+  '@next/swc-win32-arm64-msvc@16.3.8':
     optional: true
 
-  '@next/swc-win32-x64-msvc@16.3.6':
+  '@next/swc-win32-x64-msvc@16.3.8':
     optional: true
 
   '@ocelescope/api-base@file:vendor/ocelescope/ocelescope-api-base-0.10.1.tgz(@ocelescope/api-client@0.10.1(axios@1.20.0(debug@4.4.3(supports-color@7.2.0))(supports-color@7.2.0))(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(zod@4.6.5)(zustand@5.0.15(@types/react@19.3.0)(immer@11.1.8)(react@19.3.0)(use-sync-external-store@1.6.0(react@19.3.0))))(@tanstack/react-query@5.103.2(react@19.3.0))(axios@1.20.0(debug@4.4.3(supports-color@7.2.0))(supports-color@7.2.0))(react-dom@19.3.0(react@19.3.0))(react@19.3.0)':
@@ -4458,7 +4457,7 @@ snapshots:
       - typescript
       - zod
 
-  '@ocelescope/core@file:vendor/ocelescope/ocelescope-core-0.10.1.tgz(2a268f0d92005eadceba5299532f4595)':
+  '@ocelescope/core@file:vendor/ocelescope/ocelescope-core-0.10.1.tgz(2130c08f56d97502c1103093457503be)':
     dependencies:
       '@mantine/core': 9.6.2(@mantine/hooks@9.6.2(react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       '@mantine/dropzone': 9.6.2(@mantine/core@9.6.2(@mantine/hooks@9.6.2(react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(@mantine/hooks@9.6.2(react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -4467,7 +4466,7 @@ snapshots:
       '@marko19907/string-to-color': 1.0.2
       '@ocelescope/api-base': file:vendor/ocelescope/ocelescope-api-base-0.10.1.tgz(@ocelescope/api-client@0.10.1(axios@1.20.0(debug@4.4.3(supports-color@7.2.0))(supports-color@7.2.0))(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(zod@4.6.5)(zustand@5.0.15(@types/react@19.3.0)(immer@11.1.8)(react@19.3.0)(use-sync-external-store@1.6.0(react@19.3.0))))(@tanstack/react-query@5.103.2(react@19.3.0))(axios@1.20.0(debug@4.4.3(supports-color@7.2.0))(supports-color@7.2.0))(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       '@ocelescope/api-client': 0.10.1(axios@1.20.0(debug@4.4.3(supports-color@7.2.0))(supports-color@7.2.0))(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(zod@4.6.5)(zustand@5.0.15(@types/react@19.3.0)(immer@11.1.8)(react@19.3.0)(use-sync-external-store@1.6.0(react@19.3.0)))
-      '@ocelescope/resources': 0.10.1(466018fda3784dca5c6fba1ad1807ec9)
+      '@ocelescope/resources': file:vendor/ocelescope/ocelescope-resources-0.10.1.tgz(a71bfdb6a4860d5dd73e3d8bf51ebdc5)
       '@r4pm/components': 0.3.2(@types/react-dom@19.2.3(@types/react@19.3.0))(@types/react@19.3.0)(immer@11.1.8)(plotly.js@3.6.0(mapbox-gl@1.13.3)(supports-color@7.2.0))(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       '@tanstack/react-query': 5.103.2(react@19.3.0)
       '@tanstack/react-query-devtools': 5.101.2(@tanstack/react-query@5.103.2(react@19.3.0))(react@19.3.0)
@@ -4477,28 +4476,28 @@ snapshots:
       file-saver: 2.0.5
       lucide-react: 1.47.0(react@19.3.0)
       mantine-datatable: 9.4.0(@mantine/core@9.6.2(@mantine/hooks@9.6.2(react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(@mantine/hooks@9.6.2(react@19.3.0))(clsx@2.1.1)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
-      next: 16.3.6(@types/node@25.9.4)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      next: 16.3.8(@types/node@25.9.4)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       qs: 6.16.0
       react: 19.3.0
       react-dom: 19.3.0(react@19.3.0)
       zod: 4.6.5
       zustand: 5.0.15(@types/react@19.3.0)(immer@11.1.8)(react@19.3.0)(use-sync-external-store@1.6.0(react@19.3.0))
 
-  '@ocelescope/management@file:vendor/ocelescope/ocelescope-management-0.10.1.tgz(4363ae650c81bd984c65476fa12d1377)':
+  '@ocelescope/management@file:vendor/ocelescope/ocelescope-management-0.10.1.tgz(830c0c8e1d37359e1f3c30bb73efc42d)':
     dependencies:
       '@mantine/core': 9.6.2(@mantine/hooks@9.6.2(react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       '@mantine/hooks': 9.6.2(react@19.3.0)
       '@marko19907/string-to-color': 1.0.2
       '@ocelescope/api-base': file:vendor/ocelescope/ocelescope-api-base-0.10.1.tgz(@ocelescope/api-client@0.10.1(axios@1.20.0(debug@4.4.3(supports-color@7.2.0))(supports-color@7.2.0))(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(zod@4.6.5)(zustand@5.0.15(@types/react@19.3.0)(immer@11.1.8)(react@19.3.0)(use-sync-external-store@1.6.0(react@19.3.0))))(@tanstack/react-query@5.103.2(react@19.3.0))(axios@1.20.0(debug@4.4.3(supports-color@7.2.0))(supports-color@7.2.0))(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
-      '@ocelescope/core': file:vendor/ocelescope/ocelescope-core-0.10.1.tgz(2a268f0d92005eadceba5299532f4595)
-      '@ocelescope/resources': 0.10.1(466018fda3784dca5c6fba1ad1807ec9)
+      '@ocelescope/core': file:vendor/ocelescope/ocelescope-core-0.10.1.tgz(2130c08f56d97502c1103093457503be)
+      '@ocelescope/resources': file:vendor/ocelescope/ocelescope-resources-0.10.1.tgz(a71bfdb6a4860d5dd73e3d8bf51ebdc5)
       dayjs: 1.11.23
       lucide-react: 1.47.0(react@19.3.0)
       mantine-datatable: 9.4.0(@mantine/core@9.6.2(@mantine/hooks@9.6.2(react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(@mantine/hooks@9.6.2(react@19.3.0))(clsx@2.1.1)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       react: 19.3.0
       react-dom: 19.3.0(react@19.3.0)
 
-  '@ocelescope/resources@0.10.1(466018fda3784dca5c6fba1ad1807ec9)':
+  '@ocelescope/resources@file:vendor/ocelescope/ocelescope-resources-0.10.1.tgz(a71bfdb6a4860d5dd73e3d8bf51ebdc5)':
     dependencies:
       '@floating-ui/react': 0.27.20(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       '@hpcc-js/wasm-graphviz': 1.22.2
@@ -4513,7 +4512,7 @@ snapshots:
       jspdf: 4.2.1
       lucide-react: 1.47.0(react@19.3.0)
       mantine-datatable: 9.4.0(@mantine/core@9.6.2(@mantine/hooks@9.6.2(react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(@mantine/hooks@9.6.2(react@19.3.0))(clsx@2.1.1)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
-      next: 16.3.6(@types/node@25.9.4)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      next: 16.3.8(@types/node@25.9.4)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       react: 19.3.0
       react-dom: 19.3.0(react@19.3.0)
       react-plotly.js: 4.0.0(plotly.js@3.6.0(mapbox-gl@1.13.3)(supports-color@7.2.0))(react@19.3.0)
@@ -6923,9 +6922,9 @@ snapshots:
 
   next-tick@1.1.0: {}
 
-  next@16.3.6(@types/node@25.9.4)(react-dom@19.3.0(react@19.3.0))(react@19.3.0):
+  next@16.3.8(@types/node@25.9.4)(react-dom@19.3.0(react@19.3.0))(react@19.3.0):
     dependencies:
-      '@next/env': 16.3.6
+      '@next/env': 16.3.8
       '@swc/helpers': 0.5.23
       baseline-browser-mapping: 2.10.40
       caniuse-lite: 1.0.30001800
@@ -6934,14 +6933,14 @@ snapshots:
       react-dom: 19.3.0(react@19.3.0)
       styled-jsx: 5.1.6(react@19.3.0)
     optionalDependencies:
-      '@next/swc-darwin-arm64': 16.3.6
-      '@next/swc-darwin-x64': 16.3.6
-      '@next/swc-linux-arm64-gnu': 16.3.6
-      '@next/swc-linux-arm64-musl': 16.3.6
-      '@next/swc-linux-x64-gnu': 16.3.6
-      '@next/swc-linux-x64-musl': 16.3.6
-      '@next/swc-win32-arm64-msvc': 16.3.6
-      '@next/swc-win32-x64-msvc': 16.3.6
+      '@next/swc-darwin-arm64': 16.3.8
+      '@next/swc-darwin-x64': 16.3.8
+      '@next/swc-linux-arm64-gnu': 16.3.8
+      '@next/swc-linux-arm64-musl': 16.3.8
+      '@next/swc-linux-x64-gnu': 16.3.8
+      '@next/swc-linux-x64-musl': 16.3.8
+      '@next/swc-win32-arm64-msvc': 16.3.8
+      '@next/swc-win32-x64-msvc': 16.3.8
       sharp: 0.35.4(@types/node@25.9.4)
     transitivePeerDependencies:
       - '@babel/core'

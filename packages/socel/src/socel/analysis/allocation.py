@@ -315,7 +315,7 @@ def carry(
 
 
 def _handling_units_for_event(socel: SOCEL, event_id: str) -> tuple[str, ...]:
-    rows = socel.ocel.con.execute(
+    rows = socel.con.execute(
         f"""
         SELECT DISTINCT {identifier(OID_COL)}
         FROM {identifier(E2O_TABLE)}
@@ -338,7 +338,7 @@ def _parents(
     qualifier: str,
     handling_units: set[str],
 ) -> dict[str, str]:
-    rows = socel.ocel.con.execute(
+    rows = socel.con.execute(
         f"""
         SELECT {identifier(O2O_SOURCE_ID)}, {identifier(O2O_TARGET_ID)}
         FROM {identifier(O2O_TABLE)}
@@ -364,14 +364,14 @@ def _masses(
 ) -> dict[str, float]:
     columns = {
         str(row[0])
-        for row in socel.ocel.con.execute(
+        for row in socel.con.execute(
             f"DESCRIBE {identifier(OBJECT_CHANGES_TABLE)}"
         ).fetchall()
     }
     if attribute not in columns:
         raise ValueError(f"Unknown mass attribute {attribute!r}.")
 
-    rows = socel.ocel.con.execute(
+    rows = socel.con.execute(
         f"""
         WITH initial_mass AS (
             SELECT

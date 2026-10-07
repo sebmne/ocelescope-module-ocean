@@ -141,7 +141,7 @@ def _default_eligible_operations(
 
 def _operations_for_object(socel: SOCEL, object_id: str) -> tuple[str, ...]:
     event_ids = (
-        str(event_id) for event_id in socel.ocel.e2o.get_events_of_object(object_id)
+        str(event_id) for event_id in socel.e2o.get_events_of_object(object_id)
     )
     return tuple(
         event_id

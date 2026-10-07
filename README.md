@@ -62,9 +62,9 @@ its entry point in `pyproject.toml`, add it to the root `pyproject.toml`
 Ocelescope docs describe.
 
 The frontend layout of `frontend-modules/socel` is described at the top of its
-`.dependency-cruiser.cjs`, which also enforces it: routes compose features,
-features, data and model are grouped per page (e.g. `overview/`), and `ui/` is the
-only place that knows the component library.
+`.dependency-cruiser.cjs`, which also enforces it: pages compose features, a
+feature folder holds its components, hooks and helpers together, and
+`components/` is the only place that knows the component library.
 
 ### Dependency versions
 

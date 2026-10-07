@@ -1,6 +1,5 @@
-from typing import ClassVar, Self
-
-from ocelescope import OCEL, OCELExtension
+import duckdb
+from ocelescope import OCEL, Extension
 
 from socel.managers import (
     ClassificationsManager,
@@ -8,6 +7,7 @@ from socel.managers import (
     FlowsManager,
     MeasurementsManager,
 )
+from socel.schema import TABLES
 from socel.taxonomy import DEFAULT_TAXONOMY, SOCELTaxonomies
 from socel.validation import SOCELValidationError, ValidationPipeline
 from socel.validation.rules import (
@@ -24,63 +24,44 @@ from socel.validation.rules import (
 )
 
 
-class SOCEL(OCELExtension):
+class SOCEL(OCEL):
     """An OCEL that passed the sOCEL conformance rules.
 
-    Construction goes through :meth:`from_ocel`. The wrapper borrows the OCEL;
-    it neither copies nor closes its database connection.
+    :meth:`from_ocel` views an open OCEL as an sOCEL: it runs :meth:`validate` and
+    raises an ``OCELExtensionError`` with the reason if the log is none. The view
+    uses the same database as the source OCEL and adds sOCEL-specific managers.
     """
 
-    id: ClassVar[str] = "socel"
-    label: ClassVar[str] = "sOCEL"
+    extension = Extension(
+        name="socel",
+        label="sOCEL",
+        tables={
+            table.name: [
+                (column.name, column.database_type) for column in table.columns
+            ]
+            for table in TABLES
+        },
+    )
 
     def __init__(
         self,
-        ocel: OCEL,
+        connection: duckdb.DuckDBPyConnection,
         taxonomies: SOCELTaxonomies = DEFAULT_TAXONOMY,
     ) -> None:
-        self._ocel = ocel
+        super().__init__(connection)
         self.taxonomies = taxonomies
-        self.flows = FlowsManager(ocel)
-        self.flow_instances = FlowInstancesManager(ocel)
-        self.measurements = MeasurementsManager(ocel)
-        self.classifications = ClassificationsManager(ocel)
+        self.flows = FlowsManager(self)
+        self.flow_instances = FlowInstancesManager(self)
+        self.measurements = MeasurementsManager(self)
+        self.classifications = ClassificationsManager(self)
 
-    @classmethod
-    def read(
-        cls,
-        *args,
-        taxonomies: SOCELTaxonomies = DEFAULT_TAXONOMY,
-        **kwargs,
-    ) -> Self:
-        return cls.from_ocel(
-            OCEL.read(*args, **kwargs),
-            taxonomies=taxonomies,
-        )
-
-    @classmethod
-    def from_ocel(
-        cls,
-        ocel: OCEL,
-        *,
-        taxonomies: SOCELTaxonomies = DEFAULT_TAXONOMY,
-    ) -> Self:
-        """Validate ``ocel`` and return its typed sOCEL view.
+    def validate(self) -> None:
+        """Raise unless the log has the sOCEL tables and passes the conformance rules.
 
         Raises:
             SOCELValidationError: If an applicable conformance rule fails.
         """
-        instance = cls(ocel, taxonomies)
-        instance.validate()
-        return instance
-
-    @property
-    def ocel(self) -> OCEL:
-        """The underlying Ocelescope OCEL."""
-        return self._ocel
-
-    def validate(self) -> None:
-        """Revalidate after code outside this wrapper may have changed the OCEL."""
+        super().validate()
         pipeline = ValidationPipeline(
             rules=[
                 StructureRule(),
@@ -95,5 +76,5 @@ class SOCEL(OCELExtension):
                 TaxonomyMembershipRule(),
             ]
         )
-        result = pipeline.validate(self._ocel, self.taxonomies)
+        result = pipeline.validate(self, self.taxonomies)
         result.unwrap_or_raise(SOCELValidationError)

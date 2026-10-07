@@ -937,7 +937,7 @@ wheels = [
 [[package]]
 name = "ocelescope"
 version = "0.10.1"
-source = { git = "https://github.com/promi4s/ocelescope?subdirectory=src%2Focelescope&rev=71df44d0c5aff3fac9f8d90047e1b6172e01901c#71df44d0c5aff3fac9f8d90047e1b6172e01901c" }
+source = { git = "https://github.com/promi4s/ocelescope?subdirectory=src%2Focelescope&rev=329e57c0089703d1738761eaa7040d412dbbdd41#329e57c0089703d1738761eaa7040d412dbbdd41" }
 dependencies = [
     { name = "duckdb" },
     { name = "graphviz" },
@@ -966,7 +966,7 @@ plugin = [
 [[package]]
 name = "ocelescope-backend"
 version = "0.10.1"
-source = { git = "https://github.com/promi4s/ocelescope?subdirectory=src%2Fbackend%2Focelescope-backend&rev=71df44d0c5aff3fac9f8d90047e1b6172e01901c#71df44d0c5aff3fac9f8d90047e1b6172e01901c" }
+source = { git = "https://github.com/promi4s/ocelescope?subdirectory=src%2Fbackend%2Focelescope-backend&rev=329e57c0089703d1738761eaa7040d412dbbdd41#329e57c0089703d1738761eaa7040d412dbbdd41" }
 dependencies = [
     { name = "fastapi", extra = ["standard"] },
     { name = "numpy" },
@@ -998,8 +998,8 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "ocelescope-backend", git = "https://github.com/promi4s/ocelescope?subdirectory=src%2Fbackend%2Focelescope-backend&rev=71df44d0c5aff3fac9f8d90047e1b6172e01901c" },
-    { name = "ocelescope-module-ocel", git = "https://github.com/promi4s/ocelescope?subdirectory=src%2Fbackend%2Fmodules%2Focelescope-module-ocel&rev=71df44d0c5aff3fac9f8d90047e1b6172e01901c" },
+    { name = "ocelescope-backend", git = "https://github.com/promi4s/ocelescope?subdirectory=src%2Fbackend%2Focelescope-backend&rev=329e57c0089703d1738761eaa7040d412dbbdd41" },
+    { name = "ocelescope-module-ocel", git = "https://github.com/promi4s/ocelescope?subdirectory=src%2Fbackend%2Fmodules%2Focelescope-module-ocel&rev=329e57c0089703d1738761eaa7040d412dbbdd41" },
     { name = "ocelescope-module-socel", editable = "backend-modules/socel" },
 ]
 
@@ -1013,7 +1013,7 @@ dev = [
 [[package]]
 name = "ocelescope-module-ocel"
 version = "0.10.1"
-source = { git = "https://github.com/promi4s/ocelescope?subdirectory=src%2Fbackend%2Fmodules%2Focelescope-module-ocel&rev=71df44d0c5aff3fac9f8d90047e1b6172e01901c#71df44d0c5aff3fac9f8d90047e1b6172e01901c" }
+source = { git = "https://github.com/promi4s/ocelescope?subdirectory=src%2Fbackend%2Fmodules%2Focelescope-module-ocel&rev=329e57c0089703d1738761eaa7040d412dbbdd41#329e57c0089703d1738761eaa7040d412dbbdd41" }
 dependencies = [
     { name = "fastapi" },
     { name = "ocelescope" },
@@ -1036,7 +1036,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "ocelescope-backend", git = "https://github.com/promi4s/ocelescope?subdirectory=src%2Fbackend%2Focelescope-backend&rev=71df44d0c5aff3fac9f8d90047e1b6172e01901c" },
+    { name = "ocelescope-backend", git = "https://github.com/promi4s/ocelescope?subdirectory=src%2Fbackend%2Focelescope-backend&rev=329e57c0089703d1738761eaa7040d412dbbdd41" },
     { name = "pydantic", specifier = ">=2.11" },
     { name = "socel", editable = "packages/sOCEL" },
 ]
@@ -1775,7 +1775,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "ocelescope", git = "https://github.com/promi4s/ocelescope?subdirectory=src%2Focelescope&rev=71df44d0c5aff3fac9f8d90047e1b6172e01901c" },
+    { name = "ocelescope", git = "https://github.com/promi4s/ocelescope?subdirectory=src%2Focelescope&rev=329e57c0089703d1738761eaa7040d412dbbdd41" },
     { name = "ruff", specifier = ">=0.16.9" },
 ]
 
