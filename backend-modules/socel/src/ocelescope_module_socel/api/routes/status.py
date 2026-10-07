@@ -3,9 +3,12 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends
 
-from ocelescope_module_socel.api.dependencies import get_socel_status
+from ocelescope_module_socel.api.dependencies import ApiSocel, get_socel_status
 from ocelescope_module_socel.api.schema import ApiModel
-from ocelescope_module_socel.application.use_cases.get_socel_status import GetSocelStatus
+from ocelescope_module_socel.application.use_cases.get_socel_status import (
+    GetSocelStatus,
+    GetSocelStatusCommand,
+)
 from ocelescope_module_socel.domain.models.socel_status import SocelStatus
 
 router = APIRouter(tags=["sOCEL"])
@@ -47,9 +50,9 @@ class SocelStatusModel(ApiModel):
     responses={422: {"description": "The OCEL is no sOCEL."}},
 )
 def get_status(
-    ocel_id: str, use_case: Annotated[GetSocelStatus, Depends(get_socel_status)]
+    socel: ApiSocel, use_case: Annotated[GetSocelStatus, Depends(get_socel_status)]
 ) -> SocelStatusModel:
     """What the sOCEL holds, in counts, and the period its records span."""
-    result = use_case.execute()
+    result = use_case.execute(GetSocelStatusCommand(socel=socel))
     response = SocelStatusModel.from_domain(result)
     return response

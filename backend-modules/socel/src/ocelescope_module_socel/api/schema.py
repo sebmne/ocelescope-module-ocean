@@ -7,5 +7,8 @@ class ApiModel(BaseModel):
     wire, so the generated TypeScript types read like the rest of the frontend."""
 
     model_config = ConfigDict(
-        alias_generator=to_camel, validate_by_name=True, validate_by_alias=True
+        alias_generator=to_camel,
+        validate_by_name=True,
+        validate_by_alias=True,
+        serialize_by_alias=True,
     )

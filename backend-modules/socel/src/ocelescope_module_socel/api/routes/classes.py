@@ -2,9 +2,12 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends
 
-from ocelescope_module_socel.api.dependencies import get_class_counts
+from ocelescope_module_socel.api.dependencies import ApiSocel, get_class_counts
 from ocelescope_module_socel.api.schema import ApiModel
-from ocelescope_module_socel.application.use_cases.get_class_counts import GetClassCounts
+from ocelescope_module_socel.application.use_cases.get_class_counts import (
+    GetClassCounts,
+    GetClassCountsCommand,
+)
 from ocelescope_module_socel.domain.models.class_counts import ClassCount, ClassCounts
 
 router = APIRouter(tags=["sOCEL"])
@@ -39,9 +42,9 @@ class ClassCountsModel(ApiModel):
     responses={422: {"description": "The OCEL is no sOCEL."}},
 )
 def get_classes(
-    ocel_id: str, use_case: Annotated[GetClassCounts, Depends(get_class_counts)]
+    socel: ApiSocel, use_case: Annotated[GetClassCounts, Depends(get_class_counts)]
 ) -> ClassCountsModel:
     """How many objects and events carry each socel_class, most frequent first."""
-    result = use_case.execute()
+    result = use_case.execute(GetClassCountsCommand(socel=socel))
     response = ClassCountsModel.from_domain(result)
     return response

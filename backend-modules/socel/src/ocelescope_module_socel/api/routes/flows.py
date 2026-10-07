@@ -2,9 +2,12 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends
 
-from ocelescope_module_socel.api.dependencies import get_flow_inventory
+from ocelescope_module_socel.api.dependencies import ApiSocel, get_flow_inventory
 from ocelescope_module_socel.api.schema import ApiModel
-from ocelescope_module_socel.application.use_cases.get_flow_inventory import GetFlowInventory
+from ocelescope_module_socel.application.use_cases.get_flow_inventory import (
+    GetFlowInventory,
+    GetFlowInventoryCommand,
+)
 from ocelescope_module_socel.domain.models.flow_inventory import (
     FlowInstanceSummary,
     FlowSummary,
@@ -55,9 +58,9 @@ class FlowModel(ApiModel):
     responses={422: {"description": "The OCEL is no sOCEL."}},
 )
 def get_flows(
-    ocel_id: str, use_case: Annotated[GetFlowInventory, Depends(get_flow_inventory)]
+    socel: ApiSocel, use_case: Annotated[GetFlowInventory, Depends(get_flow_inventory)]
 ) -> list[FlowModel]:
     """The flows, each with its flow instances, their metering scopes and records."""
-    result = use_case.execute()
+    result = use_case.execute(GetFlowInventoryCommand(socel=socel))
     response = [FlowModel.from_domain(flow) for flow in result]
     return response

@@ -12,10 +12,11 @@ src/ocelescope_module_socel/
 ├── domain/
 │   └── models/            immutable data only: what the use cases return
 ├── application/
-│   └── use_cases/         one file per action: the use case, built with what it works on
+│   ├── command.py         Command: base of all commands (frozen, keyword-only)
+│   └── use_cases/         one file per action: the use case and its command
 └── api/
     ├── router.py          every resource's routes, under /{ocel_id}/...
-    ├── dependencies.py    composition root: builds use cases with their adapters
+    ├── dependencies.py    composition root: ApiSocel, and the use cases with their adapters
     ├── schema.py          ApiModel: camelCase base of all request/response models
     └── routes/            one file per resource; its request/response models next to it
 ```
@@ -25,18 +26,19 @@ Resources: `status`, `flows`, `classes`.
 ## The sOCEL extension
 
 The module declares `extensions = [SOCEL]` (`module.py`). The host then
-recognizes sOCELs among the logs - `SOCEL.from_ocel` validates a log against the
-conformance rules - and lists the extension in a log's metadata, which the
-frontend reads. Endpoints ask for `ApiSocel` (`api/dependencies.py`) and get the
-validated `SOCEL`; a log that is none is rejected with HTTP 422 before the use
-case is built, so use cases never check for it. The frontend guards its pages
-the same way (`requiresExtensions`), so they only open on an sOCEL.
+recognizes sOCELs among the logs - `SOCEL.from_ocel` runs `SOCEL.validate`, the
+declared tables plus the conformance rules - and lists the extension in a log's
+metadata, which the frontend reads. Endpoints ask for `ApiSocel`
+(`api/dependencies.py`) and get the validated `SOCEL`; a log that is none is
+rejected with HTTP 422 and the reason before the use case is built, so use cases
+never check for it. The frontend guards its pages the same way
+(`requiresOcel: ["socel"]`), so they only open on an sOCEL.
 
 A log is downloaded through Ocelescope's own download, which keeps the sOCEL
 tables; the module has no export of its own (the request's log is read-only).
 
-`legacy/ocean/` holds OCEAn, the earlier object-centric emission analysis. It is
-parked: not packaged, not mounted and not checked (see its README).
+OCEAn, the earlier object-centric emission analysis, is parked as a module of
+its own in the repository's `legacy/` folder (see its README).
 
 ## Rules
 
@@ -47,8 +49,11 @@ parked: not packaged, not mounted and not checked (see its README).
 - `domain` and `application` never import `fastapi`, `ocelescope_backend` or
   `pydantic`: plain dataclasses.
 - Routes get their use cases from `api/dependencies.py`, never build them.
-- An endpoint only runs its use case and maps the result. A use case that takes
-  input gets it as a `<Action>Command` dataclass, defined next to it.
+- An endpoint only runs its use case and maps the result. A use case gets
+  everything it works on - the sOCEL and any input - as one `<Action>Command`,
+  defined next to it; its constructor is for ports. A command subclasses
+  `Command` and only lists its fields: the base makes it a frozen, keyword-only
+  dataclass.
 - Computations on an sOCEL belong in the `socel` library, not here.
 - Use cases return finished data, nothing lazy: the request's OCEL is closed when
   the request ends.
@@ -59,8 +64,8 @@ import-linter; the rules above are import-linter contracts in `pyproject.toml`.
 ## Adding an endpoint
 
 1. New data in `domain/models/`.
-2. `application/use_cases/<action>.py`: the use case class with `execute(...)`,
-   and its `<Action>Command` if it takes input. Errors of its own go in
+2. `application/use_cases/<action>.py`: the `<Action>Command(Command)` (the
+   sOCEL plus any input) and the use case class with `execute(command)`. Errors of its own go in
    `domain/exceptions.py`, mapped to HTTP statuses by a handler registered in
    `module.py` (neither exists yet: no use case raises one).
 3. A port in `application/ports/` if the use case needs something from outside.

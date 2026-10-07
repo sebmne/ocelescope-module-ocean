@@ -21,14 +21,15 @@ package = true
 
 [tool.ruff]
 line-length = 100
-# The READMEs align their code comments by hand; legacy/ is parked, unchecked code.
-extend-exclude = ["*.md", "legacy"]
+# The READMEs align their code comments by hand.
+extend-exclude = ["*.md"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
 
 [tool.pyright]
 include = ["src"]
+typeCheckingMode = "standard"
 
 # The architecture, enforced: `pnpm run check:backend` (repository root) runs these contracts.
 # One hexagon for the whole module - pages are the frontend's concern - with

@@ -2,22 +2,24 @@ from collections import Counter
 
 from socel import SOCEL, Classification
 
+from ocelescope_module_socel.application.command import Command
 from ocelescope_module_socel.domain.models.class_counts import ClassCount, ClassCounts
+
+
+class GetClassCountsCommand(Command):
+    socel: SOCEL
 
 
 class GetClassCounts:
     """How many objects and events carry each sOCEL class, most frequent first;
     the unclassified ones under None."""
 
-    def __init__(self, *, socel: SOCEL) -> None:
-        self._socel = socel
-
-    def execute(self) -> ClassCounts:
-        socel = self._socel
+    def execute(self, command: GetClassCountsCommand) -> ClassCounts:
+        socel = command.socel
         classes = socel.classifications
         return ClassCounts(
-            objects=_counts(classes.objects(), classes.handling_units(), socel.ocel.objects.count),
-            events=_counts(classes.events(), classes.operations(), socel.ocel.events.count),
+            objects=_counts(classes.objects(), classes.handling_units(), socel.objects.count),
+            events=_counts(classes.events(), classes.operations(), socel.events.count),
         )
 
 

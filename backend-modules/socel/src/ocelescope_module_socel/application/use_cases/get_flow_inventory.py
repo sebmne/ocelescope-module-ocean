@@ -2,22 +2,24 @@ from collections import Counter
 
 from socel import SOCEL, IntervalRecord
 
+from ocelescope_module_socel.application.command import Command
 from ocelescope_module_socel.domain.models.flow_inventory import (
     FlowInstanceSummary,
     FlowSummary,
 )
 
 
+class GetFlowInventoryCommand(Command):
+    socel: SOCEL
+
+
 class GetFlowInventory:
     """The flows of an sOCEL, each with its flow instances: where they sit among the
     metering scopes (containment) and how many records they have."""
 
-    def __init__(self, *, socel: SOCEL) -> None:
-        self._socel = socel
-
-    def execute(self) -> tuple[FlowSummary, ...]:
-        socel = self._socel
-        object_types = socel.ocel.objects.type_by_id.to_dict()
+    def execute(self, command: GetFlowInventoryCommand) -> tuple[FlowSummary, ...]:
+        socel = command.socel
+        object_types = socel.objects.type_by_id.to_dict()
         intervals: Counter[tuple[str, str]] = Counter()
         events: Counter[tuple[str, str]] = Counter()
         for record in socel.measurements.all():
