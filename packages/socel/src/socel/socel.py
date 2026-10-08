@@ -56,12 +56,15 @@ class SOCEL(OCEL):
         self.classifications = ClassificationsManager(self)
 
     def validate(self) -> None:
-        """Raise unless the log has the sOCEL tables and passes the conformance rules.
+        """Raise unless the log passes the sOCEL conformance rules.
+
+        This replaces the base check of the declared tables: the structure rule
+        (V1) requires the same tables and columns, and names all that are missing
+        where the base check stops at the first.
 
         Raises:
             SOCELValidationError: If an applicable conformance rule fails.
         """
-        super().validate()
         pipeline = ValidationPipeline(
             rules=[
                 StructureRule(),
