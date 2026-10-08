@@ -1,4 +1,4 @@
-import { GaugeIcon, TimerIcon, UploadIcon, ZapIcon } from "lucide-react";
+import { GaugeIcon, HourglassIcon, TimerIcon, UploadIcon, ZapIcon } from "lucide-react";
 import { type ReactNode, useRef, useState } from "react";
 import {
   Badge,
@@ -15,7 +15,14 @@ import {
 import { formatCount } from "../../lib/format";
 import ClassSelect from "./ClassSelect";
 import type { ClassOption } from "./classOptions";
-import type { FlowDraft, FlowDrafts, FlowInFile, RecordFile, RecordIssue } from "./useRecordFile";
+import {
+  EMPTY_DRAFT,
+  type FlowDraft,
+  type FlowDrafts,
+  type FlowInFile,
+  type RecordFile,
+  type RecordIssue,
+} from "./useRecordFile";
 
 const COLUMNS = ["flow", "object", "quantity", "start_time", "end_time", "event"];
 const UNITS = ["kWh", "MWh", "MJ", "kg", "t", "m³", "L", "unit"];
@@ -29,6 +36,8 @@ const ISSUES: Record<RecordIssue["kind"], string> = {
   neither_interval_nor_event: "neither interval nor event",
   time_not_readable: "time not readable",
   end_not_after_start: "end not after start",
+  event_end_not_after_start: "event ends before it starts",
+  conflicting_event_end: "event with two different ends",
 };
 const NAMES_IDS = new Set<RecordIssue["kind"]>(["unknown_object", "unknown_event"]);
 
@@ -43,7 +52,8 @@ interface FlowsCardProps {
 }
 
 // The flow records of the sOCEL, taken from one CSV. The file names the flows;
-// their unit and category are set here.
+// their unit, category and reference are set here. The file may also give events
+// an end time.
 export default function FlowsCard({
   file,
   flows,
@@ -64,6 +74,16 @@ export default function FlowsCard({
       aside={
         file && (
           <Flex align="center" gap="3" flexGrow="1" justify="end">
+            {file.eventEnds > 0 && (
+              <Tooltip content={`${formatCount(file.eventEnds)} events get an end time`}>
+                <Flex align="center" gap="1" style={{ color: "var(--gray-11)" }}>
+                  <HourglassIcon size={14} aria-label="Events with an end time" />
+                  <Text size="2" style={{ fontVariantNumeric: "tabular-nums" }}>
+                    {formatCount(file.eventEnds)}
+                  </Text>
+                </Flex>
+              </Tooltip>
+            )}
             <Tooltip
               content={`${formatCount(file.usableRows)} of ${formatCount(file.rows)} rows fit the log`}
             >
@@ -117,11 +137,17 @@ export default function FlowsCard({
             ))}
           </datalist>
           <Flex direction="column" gap="1">
+            <Flex align="center" gap="3" pb="1">
+              <Box flexGrow="1" />
+              <Label width={90}>Unit</Label>
+              <Label width={240}>Category</Label>
+              <Label width={220}>Reference</Label>
+            </Flex>
             {file.flows.map((flow) => (
               <FlowRow
                 key={flow.flowId}
                 flow={flow}
-                draft={flows[flow.flowId] ?? { unit: "", category: null }}
+                draft={flows[flow.flowId] ?? EMPTY_DRAFT}
                 max={Math.max(1, ...file.flows.map((other) => other.rows))}
                 categories={categories}
                 onDefine={(change) => onDefine(flow.flowId, change)}
@@ -203,7 +229,23 @@ function FlowRow({
         value={draft.category}
         onChange={(category) => onDefine({ category })}
       />
+      <TextField.Root
+        aria-label={`Reference of ${flow.flowId}`}
+        placeholder="https://…"
+        value={draft.externalRef}
+        disabled={empty}
+        onChange={(event) => onDefine({ externalRef: event.target.value })}
+        style={{ width: 220 }}
+      />
     </Flex>
+  );
+}
+
+function Label({ width, children }: { width: number; children: ReactNode }) {
+  return (
+    <Text size="1" color="gray" weight="medium" style={{ width, flexShrink: 0 }}>
+      {children}
+    </Text>
   );
 }
 

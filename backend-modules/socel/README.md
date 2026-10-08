@@ -46,14 +46,23 @@ never check for it. The frontend guards its pages the same way
 An sOCEL is built from any log (`build_socel`): the request's log is read-only,
 so the use case works on a copy and adds the result to the session as a new log.
 
-Flow records come from one CSV, a row per record, with the columns `flow`,
-`object`, `quantity` and either `start_time` and `end_time` (an interval
-record) or `event` (an event-linked record). `object` and `event` are ids of
-the log, times are ISO 8601 with an offset, and the quantity is the amount in
-the interval. The file names the flows; unit and category are not in it, they
-are set per flow when building. Rows that do not fit the log are reported and
-left out. `data/flow_records/` holds an example for the built-in log
-"Automotive Manufacturing".
+Flow records come from one CSV with the columns `flow`, `object`, `quantity`,
+`start_time`, `end_time` and `event`. A row is one of:
+
+- an interval record: `flow`, `object`, `quantity`, `start_time`, `end_time`;
+- an event-linked record: `flow`, `object`, `quantity`, `event`, and
+  `end_time` if the event has a duration;
+- an event's end alone: `event` and `end_time`, nothing else. Events without a
+  record of their own get their duration this way.
+
+`object` and `event` are ids of the log, times are ISO 8601 with an offset, and
+the quantity is the amount in the interval. The file names the flows; what it
+cannot know about a flow is set per flow when building: unit, category and, if
+wanted, an external reference. An event's end goes into the event attribute
+`socel_end_time`. Rows that do not fit the log are reported and left out, among
+them ends before the event's start and two different ends for one event.
+`data/flow_records/` holds an example for the built-in log "Automotive
+Manufacturing".
 
 The builder does not set containment yet: a built sOCEL keeps the containment
 its source log holds, which for a plain log is none.

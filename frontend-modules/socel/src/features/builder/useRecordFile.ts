@@ -15,12 +15,16 @@ export type RecordIssue = RecordIssueModel;
 export interface FlowDraft {
   unit: string;
   category: string | null;
+  /** Where the flow is described elsewhere, e.g. a link; may stay empty. */
+  externalRef: string;
 }
 export type FlowDrafts = Readonly<Record<string, FlowDraft>>;
+export const EMPTY_DRAFT: FlowDraft = { unit: "", category: null, externalRef: "" };
 
 /**
- * The record file uploaded for the selected log, and the unit and category the
- * user gives each of its flows. A flow the log already has starts with its own.
+ * The record file uploaded for the selected log, and what the user gives each of
+ * its flows: unit, category and, if wanted, a reference. A flow the log already
+ * has starts with its own.
  */
 export function useRecordFile() {
   const { ocelId } = useSelectedOcel();
@@ -38,7 +42,11 @@ export function useRecordFile() {
             Object.fromEntries(
               uploaded.flows.map((flow) => [
                 flow.flowId,
-                { unit: flow.known?.unit ?? "", category: flow.known?.category ?? null },
+                {
+                  unit: flow.known?.unit ?? "",
+                  category: flow.known?.category ?? null,
+                  externalRef: flow.known?.externalRef ?? "",
+                },
               ]),
             ),
           );
@@ -55,12 +63,17 @@ export function useRecordFile() {
 /** The flows that bring records, as the build needs them; null while one of
  * them still lacks its unit or category. */
 export function definedFlows(file: RecordFile, drafts: FlowDrafts) {
-  const defined: Record<string, { unit: string; category: string }> = {};
+  const defined: Record<string, { unit: string; category: string; externalRef: string | null }> =
+    {};
   for (const flow of file.flows) {
     if (flow.usableRows === 0) continue;
-    const { unit, category } = drafts[flow.flowId] ?? { unit: "", category: null };
+    const { unit, category, externalRef } = drafts[flow.flowId] ?? EMPTY_DRAFT;
     if (unit.trim() === "" || category === null) return null;
-    defined[flow.flowId] = { unit: unit.trim(), category };
+    defined[flow.flowId] = {
+      unit: unit.trim(),
+      category,
+      externalRef: externalRef.trim() || null,
+    };
   }
   return defined;
 }

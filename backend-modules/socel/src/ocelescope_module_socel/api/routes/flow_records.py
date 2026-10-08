@@ -24,13 +24,17 @@ router = APIRouter(tags=["sOCEL"])
 class FlowDefinitionModel(ApiModel):
     unit: str
     category: str
+    # Points to the flow in another system, e.g. a database of emission factors.
+    external_ref: str | None = None
 
     @classmethod
     def from_domain(cls, flow: FlowDefinition) -> "FlowDefinitionModel":
-        return cls(unit=flow.unit, category=flow.category)
+        return cls(unit=flow.unit, category=flow.category, external_ref=flow.external_ref)
 
     def to_domain(self) -> FlowDefinition:
-        return FlowDefinition(unit=self.unit, category=self.category)
+        return FlowDefinition(
+            unit=self.unit, category=self.category, external_ref=self.external_ref or None
+        )
 
 
 class FlowInFileModel(ApiModel):
@@ -72,6 +76,8 @@ class UploadedRecordFileModel(ApiModel):
     upload_id: str
     rows: int
     usable_rows: int
+    # Events the file gives an end time.
+    event_ends: int
     flows: list[FlowInFileModel]
     issues: list[RecordIssueModel]
     records_from: datetime | None
@@ -84,6 +90,7 @@ class UploadedRecordFileModel(ApiModel):
             upload_id=uploaded.upload_id,
             rows=preview.rows,
             usable_rows=preview.usable_rows,
+            event_ends=preview.event_ends,
             flows=[FlowInFileModel.from_domain(flow) for flow in preview.flows],
             issues=[RecordIssueModel.from_domain(issue) for issue in preview.issues],
             records_from=preview.records_from,
@@ -102,8 +109,9 @@ async def upload_record_file(
     use_case: Annotated[UploadRecordFile, Depends(get_upload_record_file)],
 ) -> UploadedRecordFileModel:
     """Takes a CSV of flow records for the log (columns flow, object, quantity,
-    and either start_time and end_time or event): says what it holds and which
-    rows fit the log, and keeps it for building the sOCEL."""
+    start_time, end_time, event; a row is an interval record, an event-linked
+    record, or an event's end alone): says what it holds and which rows fit the
+    log, and keeps it for building the sOCEL."""
     result = use_case.execute(UploadRecordFileCommand(ocel=ocel, content=await file.read()))
     response = UploadedRecordFileModel.from_domain(result)
     return response
