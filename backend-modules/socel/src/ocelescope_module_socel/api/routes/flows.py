@@ -8,29 +8,28 @@ from ocelescope_module_socel.application.use_cases.get_flow_inventory import (
     GetFlowInventory,
     GetFlowInventoryCommand,
 )
-from ocelescope_module_socel.domain.models.flow_inventory import (
-    FlowInstanceSummary,
-    FlowSummary,
-)
+from ocelescope_module_socel.domain.models.flow_inventory import FlowByObjectType, FlowSummary
 
 router = APIRouter(tags=["sOCEL"])
 
 
-class FlowInstanceModel(ApiModel):
-    object_id: str
+class FlowByObjectTypeModel(ApiModel):
+    # The flow at the objects of one type: its flow instances there, how many of
+    # them lie inside another instance, and their records.
     object_type: str
-    parent_object_id: str | None
+    instances: int
+    contained: int
     interval_records: int
     event_records: int
 
     @classmethod
-    def from_domain(cls, instance: FlowInstanceSummary) -> "FlowInstanceModel":
+    def from_domain(cls, part: FlowByObjectType) -> "FlowByObjectTypeModel":
         return cls(
-            object_id=instance.object_id,
-            object_type=instance.object_type,
-            parent_object_id=instance.parent_object_id,
-            interval_records=instance.interval_records,
-            event_records=instance.event_records,
+            object_type=part.object_type,
+            instances=part.instances,
+            contained=part.contained,
+            interval_records=part.interval_records,
+            event_records=part.event_records,
         )
 
 
@@ -39,7 +38,11 @@ class FlowModel(ApiModel):
     unit: str
     category: str | None
     external_ref: str | None
-    instances: list[FlowInstanceModel]
+    instances: int
+    contained: int
+    interval_records: int
+    event_records: int
+    by_object_type: list[FlowByObjectTypeModel]
 
     @classmethod
     def from_domain(cls, flow: FlowSummary) -> "FlowModel":
@@ -48,7 +51,11 @@ class FlowModel(ApiModel):
             unit=flow.unit,
             category=flow.category,
             external_ref=flow.external_ref,
-            instances=[FlowInstanceModel.from_domain(i) for i in flow.instances],
+            instances=flow.instances,
+            contained=flow.contained,
+            interval_records=flow.interval_records,
+            event_records=flow.event_records,
+            by_object_type=[FlowByObjectTypeModel.from_domain(p) for p in flow.by_object_type],
         )
 
 
@@ -60,7 +67,7 @@ class FlowModel(ApiModel):
 def get_flows(
     socel: ApiSocel, use_case: Annotated[GetFlowInventory, Depends(get_flow_inventory)]
 ) -> list[FlowModel]:
-    """The flows, each with its flow instances, their metering scopes and records."""
+    """The flows with their counts, over the log and per object type."""
     result = use_case.execute(GetFlowInventoryCommand(socel=socel))
     response = [FlowModel.from_domain(flow) for flow in result]
     return response

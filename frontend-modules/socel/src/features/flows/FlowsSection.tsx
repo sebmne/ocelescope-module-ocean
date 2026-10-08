@@ -10,16 +10,18 @@ import {
   Section,
   Text,
   Tooltip,
+  useColorOf,
 } from "../../components";
 import { formatCount } from "../../lib/format";
-import ScopeTree from "./ScopeTree";
 import { type Flow, useFlowInventory } from "./useFlowInventory";
 
 // A grid, not a table: rows that unfold below themselves inside a Radix table's
 // scroll area are not always repainted (WebKit) until something else changes.
-const COLUMNS = "24px minmax(0, 1fr) 64px 88px 48px 48px 32px";
+// The count columns hold numbers in the millions.
+const COLUMNS = "24px minmax(0, 1fr) 64px 88px 96px 96px 32px";
 
-// The flows of the sOCEL; a row opens its flow instances as nested metering scopes.
+// The flows of the sOCEL; a row opens to the object types the flow is observed at.
+// Single objects are never listed: a log has too many.
 export default function FlowsSection() {
   const inventory = useFlowInventory();
   const [open, setOpen] = useState<ReadonlySet<string>>(new Set());
@@ -97,9 +99,6 @@ function FlowRow({
   onToggle: () => void;
 }) {
   const [hovered, setHovered] = useState(false);
-  const sum = (key: "intervalRecords" | "eventRecords") =>
-    flow.instances.reduce((total, instance) => total + instance[key], 0);
-
   return (
     <Box style={{ borderTop: "1px solid var(--gray-a4)" }}>
       <Grid
@@ -150,9 +149,9 @@ function FlowRow({
           )}
         </Flex>
         <Text size="2">{flow.unit}</Text>
-        <Count value={flow.instances.length} />
-        <Count value={sum("intervalRecords")} />
-        <Count value={sum("eventRecords")} />
+        <Count value={flow.instances} />
+        <Count value={flow.intervalRecords} />
+        <Count value={flow.eventRecords} />
         <Flex justify="end" onClick={(event) => event.stopPropagation()}>
           {flow.externalRef && (
             <IconButton variant="ghost" color="gray" size="1" asChild>
@@ -169,12 +168,28 @@ function FlowRow({
         </Flex>
       </Grid>
       {isOpen && (
-        <Box
-          px="5"
-          py="2"
-          style={{ background: "var(--gray-a2)", borderTop: "1px solid var(--gray-a3)" }}
-        >
-          <ScopeTree flow={flow} />
+        <Box py="1" style={{ background: "var(--gray-a2)", borderTop: "1px solid var(--gray-a3)" }}>
+          {flow.byObjectType.map((part) => (
+            <Grid key={part.objectType} columns={COLUMNS} align="center" gap="3" px="3" py="1">
+              <span />
+              <Flex align="center" gap="2" minWidth="0">
+                <TypeDot type={part.objectType} />
+                <Text size="2" truncate>
+                  {part.objectType}
+                </Text>
+                {part.contained > 0 && (
+                  <Text size="1" color="gray" wrap="nowrap">
+                    {formatCount(part.contained)} contained
+                  </Text>
+                )}
+              </Flex>
+              <span />
+              <Count value={part.instances} />
+              <Count value={part.intervalRecords} />
+              <Count value={part.eventRecords} />
+              <span />
+            </Grid>
+          ))}
         </Box>
       )}
     </Box>
@@ -204,5 +219,22 @@ function Count({ value }: { value: number }) {
     <Text size="2" align="right" style={{ fontVariantNumeric: "tabular-nums" }}>
       {formatCount(value)}
     </Text>
+  );
+}
+
+// The colour an object type has everywhere in Ocelescope.
+function TypeDot({ type }: { type: string }) {
+  const colorOf = useColorOf("objectType");
+  return (
+    <span
+      aria-hidden
+      style={{
+        flex: "none",
+        width: 8,
+        height: 8,
+        borderRadius: "50%",
+        background: colorOf(type),
+      }}
+    />
   );
 }

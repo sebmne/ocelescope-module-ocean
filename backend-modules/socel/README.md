@@ -37,11 +37,19 @@ log's sOCEL as a new log).
 The module declares `extensions = [SOCEL]` (`module.py`). The host then
 recognizes sOCELs among the logs - `SOCEL.from_ocel` runs `SOCEL.validate`, the
 declared tables plus the conformance rules - and lists the extension in a log's
-metadata, which the frontend reads. Endpoints ask for `ApiSocel`
-(`api/dependencies.py`) and get the validated `SOCEL`; a log that is none is
-rejected with HTTP 422 and the reason before the use case is built, so use cases
-never check for it. The frontend guards its pages the same way
+metadata, which the frontend reads. The frontend guards its pages with it
 (`requiresOcel: ["socel"]`), so they only open on an sOCEL.
+
+Endpoints ask for `ApiSocel` (`api/dependencies.py`) and get the log as a
+`SOCEL`; a log that is none is rejected with HTTP 422 and the reason before the
+use case is built, so use cases never check for it. The check takes seconds on
+a large log, so the module runs it once per log and not on every request: a
+session's logs are files that are written once.
+
+The counts of the overview (`status`, `flows`, `classes`) come from aggregate
+queries behind the port `SocelStatistics`, not from the library's managers,
+which hand out one object per record, instance and classification. `flows`
+breaks a flow down by object type and never lists single objects.
 
 An sOCEL is built from any log (`build_socel`): the request's log is read-only,
 so the use case works on a copy and adds the result to the session as a new log.
