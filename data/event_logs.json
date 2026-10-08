@@ -19,6 +19,18 @@
 			"name": "Automotive Manufacturing",
 			"version": "1",
 			"file": "automotive_manufacturing.db"
+		},
+		{
+			"key": "large-plant",
+			"name": "Large Plant",
+			"version": "1",
+			"file": "large_plant.db"
+		},
+		{
+			"key": "large-plant-socel",
+			"name": "Large Plant sOCEL",
+			"version": "1",
+			"file": "large_plant_socel.db"
 		}
 	]
 }

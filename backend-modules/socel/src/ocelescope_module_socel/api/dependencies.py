@@ -18,6 +18,7 @@ from ocelescope_module_socel.application.use_cases.get_class_counts import GetCl
 from ocelescope_module_socel.application.use_cases.get_class_taxonomies import (
     GetClassTaxonomies,
 )
+from ocelescope_module_socel.application.use_cases.get_flow_instances import GetFlowInstances
 from ocelescope_module_socel.application.use_cases.get_flow_inventory import (
     GetFlowInventory,
 )
@@ -85,6 +86,12 @@ def get_flow_inventory(
     statistics: Annotated[SocelStatistics, Depends(get_socel_statistics)],
 ) -> GetFlowInventory:
     return GetFlowInventory(statistics=statistics)
+
+
+def get_flow_instances(
+    statistics: Annotated[SocelStatistics, Depends(get_socel_statistics)],
+) -> GetFlowInstances:
+    return GetFlowInstances(statistics=statistics)
 
 
 def get_class_counts(

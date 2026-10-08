@@ -25,3 +25,26 @@ class FlowSummary(Model):
     interval_records: int
     event_records: int
     by_object_type: tuple[FlowByObjectType, ...]
+
+
+class FlowInstanceRow(Model):
+    """A flow at one object: the object it lies inside, how many lie directly
+    inside it, its records, and the quantity they sum to."""
+
+    object_id: str
+    object_type: str
+    parent_object_id: str | None
+    contains: int
+    interval_records: int
+    event_records: int
+    quantity: float
+
+
+class FlowInstancePage(Model):
+    """One page of a flow's instances: the rows, how many there are in all under
+    the same filter, and, when the page shows what lies inside an object, the
+    way from the outermost object down to it."""
+
+    total: int
+    rows: tuple[FlowInstanceRow, ...]
+    path: tuple[str, ...]

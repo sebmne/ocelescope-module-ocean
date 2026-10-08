@@ -9,8 +9,14 @@ from ocelescope.ocel.constants.tables import EVENTS_TABLE, OBJECT_CHANGES_TABLE,
 from socel import SOCEL
 from socel.schema import CONTAINED_IN, EVENT_RECORDS, FLOW, INTERVAL_RECORDS, SOCEL_CLASS
 
+from ocelescope_module_socel.application.ports.socel_statistics import InstanceOrder
 from ocelescope_module_socel.domain.models.class_counts import ClassCount, ClassCounts
-from ocelescope_module_socel.domain.models.flow_inventory import FlowByObjectType, FlowSummary
+from ocelescope_module_socel.domain.models.flow_inventory import (
+    FlowByObjectType,
+    FlowInstancePage,
+    FlowInstanceRow,
+    FlowSummary,
+)
 from ocelescope_module_socel.domain.models.socel_status import SocelStatus
 
 # The classes that make an object a handling unit and an event an operation,
@@ -133,6 +139,82 @@ class DuckDbSocelStatistics:
             ).fetchall()
         )
 
+    def flow_instances(
+        self,
+        socel: SOCEL,
+        flow_id: str,
+        *,
+        object_type: str | None,
+        inside: str | None,
+        search: str | None,
+        order: InstanceOrder,
+        offset: int,
+        limit: int,
+    ) -> FlowInstancePage:
+        ordering = "quantity DESC, object_id" if order == "quantity" else "object_id"
+        rows = socel.sql(
+            f"""
+            WITH instance AS (SELECT object_id FROM ({_INSTANCES}) WHERE flow_id = $flow),
+            record AS (
+                SELECT object_id, count(*) FILTER (is_interval) AS interval_records,
+                       count(*) FILTER (NOT is_interval) AS event_records,
+                       sum(quantity) AS quantity
+                FROM (
+                    SELECT object_id, quantity, true AS is_interval
+                    FROM {INTERVAL_RECORDS.name} WHERE flow_id = $flow
+                    UNION ALL
+                    SELECT object_id, quantity, false
+                    FROM {EVENT_RECORDS.name} WHERE flow_id = $flow
+                )
+                GROUP BY 1
+            ),
+            inside AS (
+                SELECT object_id, parent_object_id FROM {CONTAINED_IN.name} WHERE flow_id = $flow
+            ),
+            around AS (
+                SELECT parent_object_id AS object_id, count(*) AS contains FROM inside GROUP BY 1
+            )
+            SELECT instance.object_id, object."{OTYPE_COL}" AS object_type,
+                   inside.parent_object_id, coalesce(around.contains, 0),
+                   coalesce(record.interval_records, 0), coalesce(record.event_records, 0),
+                   coalesce(record.quantity, 0) AS quantity, count(*) OVER ()
+            FROM instance
+            JOIN {OBJECTS_TABLE} object ON object."{OID_COL}" = instance.object_id
+            LEFT JOIN inside USING (object_id)
+            LEFT JOIN around USING (object_id)
+            LEFT JOIN record USING (object_id)
+            WHERE ($type IS NULL OR object."{OTYPE_COL}" = $type)
+              AND ($inside IS NULL OR inside.parent_object_id = $inside)
+              AND ($search IS NULL OR contains(lower(instance.object_id), lower($search)))
+            ORDER BY {ordering}
+            LIMIT $limit OFFSET $offset
+            """,
+            params={  # pyright: ignore[reportArgumentType]
+                "flow": flow_id,
+                "type": object_type,
+                "inside": inside,
+                "search": search,
+                "limit": limit,
+                "offset": offset,
+            },
+        ).fetchall()
+        return FlowInstancePage(
+            total=rows[0][7] if rows else 0,
+            rows=tuple(
+                FlowInstanceRow(
+                    object_id=object_id,
+                    object_type=type_,
+                    parent_object_id=parent,
+                    contains=contains,
+                    interval_records=intervals,
+                    event_records=events,
+                    quantity=quantity,
+                )
+                for object_id, type_, parent, contains, intervals, events, quantity, _ in rows
+            ),
+            path=_path_to(socel, flow_id, inside) if inside is not None else (),
+        )
+
     def class_counts(self, socel: SOCEL) -> ClassCounts:
         objects = socel.sql(
             f"""
@@ -149,6 +231,26 @@ class DuckDbSocelStatistics:
             objects=_class_counts(objects, _HANDLING_UNIT),
             events=_class_counts(events, _OPERATION),
         )
+
+
+def _path_to(socel: SOCEL, flow_id: str, object_id: str) -> tuple[str, ...]:
+    """The objects from the outermost one down to the given one, each lying
+    inside the one before, for the flow."""
+    rows = socel.sql(
+        f"""
+        WITH RECURSIVE up(object_id, depth) AS (
+            SELECT $object, 0
+            UNION ALL
+            SELECT inside.parent_object_id, up.depth + 1
+            FROM up JOIN {CONTAINED_IN.name} inside
+              ON inside.flow_id = $flow AND inside.object_id = up.object_id
+            WHERE up.depth < 50
+        )
+        SELECT object_id FROM up ORDER BY depth DESC
+        """,
+        params={"flow": flow_id, "object": object_id},  # pyright: ignore[reportArgumentType]
+    ).fetchall()
+    return tuple(row[0] for row in rows)
 
 
 def _has_column(socel: SOCEL, table: str, column: str) -> bool:

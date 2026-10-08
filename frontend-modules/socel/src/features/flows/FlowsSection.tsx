@@ -1,4 +1,11 @@
-import { ChevronRightIcon, ExternalLinkIcon, GaugeIcon, TimerIcon, ZapIcon } from "lucide-react";
+import {
+  ArrowRightIcon,
+  ChevronRightIcon,
+  ExternalLinkIcon,
+  GaugeIcon,
+  TimerIcon,
+  ZapIcon,
+} from "lucide-react";
 import { type ReactNode, useState } from "react";
 import {
   AsyncBoundary,
@@ -12,8 +19,8 @@ import {
   Tooltip,
   useColorOf,
 } from "../../components";
+import { type Flow, useFlowInventory } from "../../hooks/useFlowInventory";
 import { formatCount } from "../../lib/format";
-import { type Flow, useFlowInventory } from "./useFlowInventory";
 
 // A grid, not a table: rows that unfold below themselves inside a Radix table's
 // scroll area are not always repainted (WebKit) until something else changes.
@@ -21,8 +28,14 @@ import { type Flow, useFlowInventory } from "./useFlowInventory";
 const COLUMNS = "24px minmax(0, 1fr) 64px 88px 96px 96px 32px";
 
 // The flows of the sOCEL; a row opens to the object types the flow is observed at.
-// Single objects are never listed: a log has too many.
-export default function FlowsSection() {
+// Single objects are not listed here, a log has too many: an object type leads to
+// the flow's objects, a page at a time.
+export default function FlowsSection({
+  onOpen,
+}: {
+  /** Called to show the flow's objects of one type. */
+  onOpen: (flowId: string, objectType: string) => void;
+}) {
   const inventory = useFlowInventory();
   const [open, setOpen] = useState<ReadonlySet<string>>(new Set());
 
@@ -80,6 +93,7 @@ export default function FlowsSection() {
                 flow={flow}
                 isOpen={open.has(flow.flowId)}
                 onToggle={() => toggle(flow.flowId)}
+                onOpen={(objectType) => onOpen(flow.flowId, objectType)}
               />
             ))}
           </Box>
@@ -93,10 +107,12 @@ function FlowRow({
   flow,
   isOpen,
   onToggle,
+  onOpen,
 }: {
   flow: Flow;
   isOpen: boolean;
   onToggle: () => void;
+  onOpen: (objectType: string) => void;
 }) {
   const [hovered, setHovered] = useState(false);
   return (
@@ -170,25 +186,7 @@ function FlowRow({
       {isOpen && (
         <Box py="1" style={{ background: "var(--gray-a2)", borderTop: "1px solid var(--gray-a3)" }}>
           {flow.byObjectType.map((part) => (
-            <Grid key={part.objectType} columns={COLUMNS} align="center" gap="3" px="3" py="1">
-              <span />
-              <Flex align="center" gap="2" minWidth="0">
-                <TypeDot type={part.objectType} />
-                <Text size="2" truncate>
-                  {part.objectType}
-                </Text>
-                {part.contained > 0 && (
-                  <Text size="1" color="gray" wrap="nowrap">
-                    {formatCount(part.contained)} contained
-                  </Text>
-                )}
-              </Flex>
-              <span />
-              <Count value={part.instances} />
-              <Count value={part.intervalRecords} />
-              <Count value={part.eventRecords} />
-              <span />
-            </Grid>
+            <TypeLine key={part.objectType} part={part} onOpen={() => onOpen(part.objectType)} />
           ))}
         </Box>
       )}
@@ -236,5 +234,56 @@ function TypeDot({ type }: { type: string }) {
         background: colorOf(type),
       }}
     />
+  );
+}
+
+// A flow at the objects of one type; leads to those objects.
+function TypeLine({ part, onOpen }: { part: Flow["byObjectType"][number]; onOpen: () => void }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <Grid
+      role="link"
+      tabIndex={0}
+      aria-label={`Show the ${part.objectType} objects`}
+      columns={COLUMNS}
+      align="center"
+      gap="3"
+      px="3"
+      py="1"
+      onClick={onOpen}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onOpen();
+        }
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        cursor: "pointer",
+        background: hovered ? "var(--gray-a3)" : undefined,
+        transition: "background 100ms",
+      }}
+    >
+      <span />
+      <Flex align="center" gap="2" minWidth="0">
+        <TypeDot type={part.objectType} />
+        <Text size="2" truncate>
+          {part.objectType}
+        </Text>
+        {part.contained > 0 && (
+          <Text size="1" color="gray" wrap="nowrap">
+            {formatCount(part.contained)} contained
+          </Text>
+        )}
+      </Flex>
+      <span />
+      <Count value={part.instances} />
+      <Count value={part.intervalRecords} />
+      <Count value={part.eventRecords} />
+      <Flex justify="end" style={{ color: hovered ? "var(--accent-11)" : "var(--gray-9)" }}>
+        <ArrowRightIcon size={14} aria-hidden />
+      </Flex>
+    </Grid>
   );
 }

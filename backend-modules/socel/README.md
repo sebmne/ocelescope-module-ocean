@@ -49,7 +49,9 @@ session's logs are files that are written once.
 The counts of the overview (`status`, `flows`, `classes`) come from aggregate
 queries behind the port `SocelStatistics`, not from the library's managers,
 which hand out one object per record, instance and classification. `flows`
-breaks a flow down by object type and never lists single objects.
+breaks a flow down by object type. Single objects come a page at a time from
+`flows/{flow_id}/instances`, filtered by object type, by the object they lie
+inside, or by a search in the object id.
 
 An sOCEL is built from any log (`build_socel`): the request's log is read-only,
 so the use case works on a copy and adds the result to the session as a new log.
