@@ -1,8 +1,7 @@
-from dataclasses import dataclass
+from ocelescope_module_socel.domain.models.base import Model
 
 
-@dataclass(frozen=True, kw_only=True)
-class ClassCount:
+class ClassCount(Model):
     """How many objects or events carry a socel_class (None: unclassified).
 
     `is_core` marks the classes that make handling units (for objects) or
@@ -14,7 +13,6 @@ class ClassCount:
     is_core: bool
 
 
-@dataclass(frozen=True, kw_only=True)
-class ClassCounts:
+class ClassCounts(Model):
     objects: tuple[ClassCount, ...]
     events: tuple[ClassCount, ...]

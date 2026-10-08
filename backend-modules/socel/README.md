@@ -10,7 +10,8 @@ page uses whichever resources it needs.
 src/ocelescope_module_socel/
 ├── module.py            Socel(Module): builds the FastAPI app, mounts the router
 ├── domain/
-│   ├── models/            immutable data only: what the use cases return
+│   ├── models/            immutable data only: what the use cases return;
+│   │                      base.py holds Model, the base of them all
 │   └── exceptions.py      the module's own errors
 ├── application/
 │   ├── command.py         Command: base of all commands (frozen, keyword-only)
@@ -74,7 +75,9 @@ its own in the repository's `legacy/` folder (see its README).
   `application/ports/`; its adapter goes in `infrastructure/`, between `api` and
   `application`.
 - `domain` and `application` never import `fastapi`, `ocelescope_backend` or
-  `pydantic`: plain dataclasses.
+  `pydantic`: plain dataclasses. A domain model subclasses `Model` and only
+  lists its fields: the base makes it a frozen, keyword-only dataclass, as
+  `Command` does for commands.
 - Routes get their use cases from `api/dependencies.py`, never build them.
 - An endpoint only runs its use case and maps the result. A use case gets
   everything it works on - the sOCEL and any input - as one `<Action>Command`,
@@ -90,7 +93,7 @@ import-linter; the rules above are import-linter contracts in `pyproject.toml`.
 
 ## Adding an endpoint
 
-1. New data in `domain/models/`.
+1. New data in `domain/models/`, as subclasses of `Model`.
 2. `application/use_cases/<action>.py`: the `<Action>Command(Command)` (the
    sOCEL plus any input) and the use case class with `execute(command)`. Errors of its own go in
    `domain/exceptions.py`, mapped to HTTP statuses in

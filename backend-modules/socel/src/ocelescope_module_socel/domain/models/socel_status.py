@@ -1,9 +1,9 @@
-from dataclasses import dataclass
 from datetime import datetime
 
+from ocelescope_module_socel.domain.models.base import Model
 
-@dataclass(frozen=True, kw_only=True)
-class SocelStatus:
+
+class SocelStatus(Model):
     """What an sOCEL holds, in counts."""
 
     objects: int

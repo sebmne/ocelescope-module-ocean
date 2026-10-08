@@ -1,8 +1,7 @@
-from dataclasses import dataclass
+from ocelescope_module_socel.domain.models.base import Model
 
 
-@dataclass(frozen=True, kw_only=True)
-class FlowInstanceSummary:
+class FlowInstanceSummary(Model):
     """A flow observed at an object, where it sits among the metering scopes, and
     how many records it has."""
 
@@ -14,8 +13,7 @@ class FlowInstanceSummary:
     event_records: int
 
 
-@dataclass(frozen=True, kw_only=True)
-class FlowSummary:
+class FlowSummary(Model):
     flow_id: str
     unit: str
     category: str | None

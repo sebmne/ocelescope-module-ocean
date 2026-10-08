@@ -1,6 +1,7 @@
-from dataclasses import dataclass
 from datetime import datetime
 from typing import Literal
+
+from ocelescope_module_socel.domain.models.base import Model
 
 # What keeps rows of a record file out of the sOCEL.
 IssueKind = Literal[
@@ -15,16 +16,14 @@ IssueKind = Literal[
 ]
 
 
-@dataclass(frozen=True, kw_only=True)
-class FlowDefinition:
+class FlowDefinition(Model):
     """What a record file cannot know about a flow: set once, by hand."""
 
     unit: str
     category: str
 
 
-@dataclass(frozen=True, kw_only=True)
-class FlowInFile:
+class FlowInFile(Model):
     """A flow named in a record file: its rows by kind, how many of all its rows
     can be taken over, and on how many objects. `known` is the flow's definition
     when the log already has the flow."""
@@ -38,8 +37,7 @@ class FlowInFile:
     known: FlowDefinition | None
 
 
-@dataclass(frozen=True, kw_only=True)
-class RecordIssue:
+class RecordIssue(Model):
     """Rows that cannot be taken over, by reason; `examples` are a few of the ids
     not found in the log, or of the file's line numbers."""
 
@@ -48,8 +46,7 @@ class RecordIssue:
     examples: tuple[str, ...]
 
 
-@dataclass(frozen=True, kw_only=True)
-class RecordFilePreview:
+class RecordFilePreview(Model):
     """What a record file holds, seen against a log."""
 
     rows: int

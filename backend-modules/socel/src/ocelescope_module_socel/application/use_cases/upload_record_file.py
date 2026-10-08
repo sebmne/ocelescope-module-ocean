@@ -1,10 +1,9 @@
-from dataclasses import dataclass
-
 from ocelescope import OCEL
 
 from ocelescope_module_socel.application.command import Command
 from ocelescope_module_socel.application.ports.record_importer import RecordImporter
 from ocelescope_module_socel.application.ports.upload_store import UploadStore
+from ocelescope_module_socel.domain.models.base import Model
 from ocelescope_module_socel.domain.models.record_file import RecordFilePreview
 
 
@@ -13,8 +12,7 @@ class UploadRecordFileCommand(Command):
     content: bytes
 
 
-@dataclass(frozen=True, kw_only=True)
-class UploadedRecordFile:
+class UploadedRecordFile(Model):
     """The id the file is kept under, and what it holds."""
 
     upload_id: str

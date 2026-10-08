@@ -1,5 +1,4 @@
 from collections.abc import Mapping
-from dataclasses import dataclass
 
 from ocelescope import OCEL
 from socel import DEFAULT_TAXONOMY, SOCEL, SOCELTaxonomies, Taxonomy
@@ -17,11 +16,11 @@ from ocelescope_module_socel.domain.exceptions import (
     UnknownType,
     UnknownUpload,
 )
+from ocelescope_module_socel.domain.models.base import Model
 from ocelescope_module_socel.domain.models.record_file import FlowDefinition
 
 
-@dataclass(frozen=True, kw_only=True)
-class RecordsToImport:
+class RecordsToImport(Model):
     """An uploaded record file and the definition of each of its flows."""
 
     upload_id: str

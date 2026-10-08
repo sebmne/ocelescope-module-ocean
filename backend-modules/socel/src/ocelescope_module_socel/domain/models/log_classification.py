@@ -1,8 +1,7 @@
-from dataclasses import dataclass
+from ocelescope_module_socel.domain.models.base import Model
 
 
-@dataclass(frozen=True, kw_only=True)
-class TypeClassification:
+class TypeClassification(Model):
     """An activity or object type of a log: how many events or objects it has,
     and the socel_class they carry. None when they carry none, or not all the
     same one."""
@@ -12,8 +11,7 @@ class TypeClassification:
     socel_class: str | None
 
 
-@dataclass(frozen=True, kw_only=True)
-class LogClassification:
+class LogClassification(Model):
     """How a log's activities and object types are classified, most frequent first."""
 
     activities: tuple[TypeClassification, ...]
