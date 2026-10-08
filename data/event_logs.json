@@ -9,10 +9,16 @@
 			"url": "https://zenodo.org/records/18373888"
 		},
 		{
-		"key": "sOCEL-example",
-		"name": "sOCEL Example",
-		"version": "1",
-		"file": "automotive_manufacturing_socel.db"
+			"key": "sOCEL-example",
+			"name": "sOCEL Example",
+			"version": "1",
+			"file": "automotive_manufacturing_socel.db"
+		},
+		{
+			"key": "automotive-plain",
+			"name": "Automotive Manufacturing",
+			"version": "1",
+			"file": "automotive_manufacturing.db"
 		}
 	]
 }

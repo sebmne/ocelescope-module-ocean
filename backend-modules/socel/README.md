@@ -10,18 +10,26 @@ page uses whichever resources it needs.
 src/ocelescope_module_socel/
 ├── module.py            Socel(Module): builds the FastAPI app, mounts the router
 ├── domain/
-│   └── models/            immutable data only: what the use cases return
+│   ├── models/            immutable data only: what the use cases return
+│   └── exceptions.py      the module's own errors
 ├── application/
 │   ├── command.py         Command: base of all commands (frozen, keyword-only)
+│   ├── ports/             what use cases need from outside, as protocols
 │   └── use_cases/         one file per action: the use case and its command
+├── infrastructure/        adapters of the ports: SQL on a log, the session's logs
 └── api/
     ├── router.py          every resource's routes, under /{ocel_id}/...
     ├── dependencies.py    composition root: ApiSocel, and the use cases with their adapters
     ├── schema.py          ApiModel: camelCase base of all request/response models
+    ├── exception_handlers.py  the module's errors as HTTP statuses
     └── routes/            one file per resource; its request/response models next to it
 ```
 
-Resources: `status`, `flows`, `classes`.
+Resources of an sOCEL: `status`, `flows`, `classes`. Resources of any log:
+`taxonomy` (the classes and flow categories an sOCEL may use), `classification`
+(the class per activity and object type), `flow-records` (POST: takes a record
+file and says which of its rows fit the log) and `socel` (POST: builds the
+log's sOCEL as a new log).
 
 ## The sOCEL extension
 
@@ -34,6 +42,25 @@ rejected with HTTP 422 and the reason before the use case is built, so use cases
 never check for it. The frontend guards its pages the same way
 (`requiresOcel: ["socel"]`), so they only open on an sOCEL.
 
+An sOCEL is built from any log (`build_socel`): the request's log is read-only,
+so the use case works on a copy and adds the result to the session as a new log.
+
+Flow records come from one CSV, a row per record, with the columns `flow`,
+`object`, `quantity` and either `start_time` and `end_time` (an interval
+record) or `event` (an event-linked record). `object` and `event` are ids of
+the log, times are ISO 8601 with an offset, and the quantity is the amount in
+the interval. The file names the flows; unit and category are not in it, they
+are set per flow when building. Rows that do not fit the log are reported and
+left out. `data/flow_records/` holds an example for the built-in log
+"Automotive Manufacturing".
+
+The builder does not set containment yet: a built sOCEL keeps the containment
+its source log holds, which for a plain log is none.
+
+Everything a user decides is a rule on the type level (activity, object type,
+flow), and no response should grow with the number of events or objects: logs
+with hundreds of thousands of each are normal.
+
 A log is downloaded through Ocelescope's own download, which keeps the sOCEL
 tables; the module has no export of its own (the request's log is read-only).
 
@@ -45,7 +72,7 @@ its own in the repository's `legacy/` folder (see its README).
 - Dependencies point inwards: `module` -> `api` -> `application` -> `domain`.
   A use case that needs something from outside declares a port in
   `application/ports/`; its adapter goes in `infrastructure/`, between `api` and
-  `application`. Neither exists yet.
+  `application`.
 - `domain` and `application` never import `fastapi`, `ocelescope_backend` or
   `pydantic`: plain dataclasses.
 - Routes get their use cases from `api/dependencies.py`, never build them.
@@ -66,11 +93,10 @@ import-linter; the rules above are import-linter contracts in `pyproject.toml`.
 1. New data in `domain/models/`.
 2. `application/use_cases/<action>.py`: the `<Action>Command(Command)` (the
    sOCEL plus any input) and the use case class with `execute(command)`. Errors of its own go in
-   `domain/exceptions.py`, mapped to HTTP statuses by a handler registered in
-   `module.py` (neither exists yet: no use case raises one).
+   `domain/exceptions.py`, mapped to HTTP statuses in
+   `api/exception_handlers.py`.
 3. A port in `application/ports/` if the use case needs something from outside.
-   Its adapter goes in `infrastructure/` (add the import contract named in
-   `pyproject.toml` then).
+   Its adapter goes in `infrastructure/`.
 4. `api/dependencies.py`: a `get_<action>` function building the use case.
 5. `api/routes/<resource>.py`: request/response models (`ApiModel`) and the
    route with a stable `operation_id` (it names the generated frontend hook);

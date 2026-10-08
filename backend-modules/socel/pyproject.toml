@@ -58,3 +58,10 @@ name = "Application and domain know no web framework, server or pydantic (plain 
 type = "forbidden"
 source_modules = ["ocelescope_module_socel.application", "ocelescope_module_socel.domain"]
 forbidden_modules = ["fastapi", "ocelescope_backend", "pydantic"]
+
+[[tool.importlinter.contracts]]
+name = "Routes reach adapters only through the composition root (api/dependencies.py)"
+type = "forbidden"
+source_modules = ["ocelescope_module_socel.api.routes", "ocelescope_module_socel.api.router"]
+forbidden_modules = ["ocelescope_module_socel.infrastructure"]
+allow_indirect_imports = true

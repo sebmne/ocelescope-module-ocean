@@ -4,6 +4,7 @@ from packaging.version import Version
 from socel import SOCEL
 
 from ocelescope_module_socel.api import router
+from ocelescope_module_socel.api.exception_handlers import register_exception_handlers
 
 
 class Socel(Module):
@@ -15,5 +16,6 @@ class Socel(Module):
 
     def create_app(self) -> FastAPI:
         app = FastAPI(title="sOCEL", version=str(self.meta.version), docs_url=None, redoc_url=None)
+        register_exception_handlers(app)
         app.include_router(router.router)
         return app
