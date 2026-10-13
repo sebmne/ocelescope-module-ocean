@@ -12,7 +12,7 @@
 			"key": "hingeProduction",
 			"name": "Hinge Production (sOCEL)",
 			"version": "2",
-			"file": "socel_hinge_v2_taxonomy.sqlite"
+			"file": "socel_hinge_v2_taxonomy_clean.db"
 		}
 	]
 }
