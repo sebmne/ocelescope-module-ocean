@@ -9,22 +9,10 @@
 			"url": "https://zenodo.org/records/18373888"
 		},
 		{
-			"key": "sOCEL-example",
-			"name": "sOCEL Example",
-			"version": "1",
-			"file": "automotive_manufacturing_socel.db"
-		},
-		{
-			"key": "automotive-plain",
-			"name": "Automotive Manufacturing",
-			"version": "1",
-			"file": "automotive_manufacturing.db"
-		},
-		{
-			"key": "large-plant-socel",
-			"name": "Large Plant sOCEL",
-			"version": "1",
-			"file": "large_plant_socel.db"
+			"key": "hingeProduction",
+			"name": "Hinge Production (sOCEL)",
+			"version": "2",
+			"file": "socel_hinge_v2_taxonomy.sqlite"
 		}
 	]
 }

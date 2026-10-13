@@ -21,7 +21,7 @@ const classOfIn =
 // Turns the selected log into an sOCEL: every activity and object type gets a
 // class of the taxonomy, flow records come from a file, and the result is added
 // as a new log.
-export default function SocelBuilder() {
+export default function SocelConfig() {
   const router = useRouter();
   const { name: logName } = useSelectedOcel();
   const classification = useLogClassification();

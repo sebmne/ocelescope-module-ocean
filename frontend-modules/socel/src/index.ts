@@ -5,20 +5,20 @@ import WaveIcon from "./assets/WaveIcon";
 // Pages are built from r4pm components, which load stylesheets and reach for
 // `document` as they are imported: they stay out of the server render.
 const OverviewPage = dynamic(() => import("./pages/OverviewPage"), { ssr: false });
-const BuilderPage = dynamic(() => import("./pages/BuilderPage"), { ssr: false });
+const ConfigPage = dynamic(() => import("./pages/ConfigPage"), { ssr: false });
 
 // The module's table of contents: every page, and how it appears in the navigation.
 export default defineModule({
-  name: "socel",
-  label: "sOCEL",
-  description: "Sustainability analysis of object-centric event logs.",
+  name: "ocean",
+  label: "OCEAn",
+  description: "Object-centric emission analysis.",
   authors: [{ name: "Menne, Sebastian" }],
   routes: [
     defineModuleRoute({
-      name: "builder",
-      label: "Builder",
+      name: "config",
+      label: "Config",
       requiresOcel: true,
-      component: BuilderPage,
+      component: ConfigPage,
     }),
     defineModuleRoute({
       name: "overview",
