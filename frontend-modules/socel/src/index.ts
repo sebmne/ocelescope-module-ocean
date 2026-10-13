@@ -16,7 +16,7 @@ export default defineModule({
   routes: [
     defineModuleRoute({
       name: "config",
-      label: "Config",
+      label: "sOCEL config",
       requiresOcel: true,
       component: ConfigPage,
     }),

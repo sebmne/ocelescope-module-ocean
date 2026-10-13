@@ -57,12 +57,12 @@ export default function SocelConfig() {
       objectTypes,
       records.file && flows ? { uploadId: records.file.uploadId, flows } : null,
     )
-      .then(() => router.push("/socel/overview"))
+      .then(() => router.push("/ocean/overview"))
       .catch(() => undefined);
 
   return (
     <Page
-      title="Build sOCEL"
+      title="sOCEL config"
       actions={
         <Flex align="center" gap="2">
           <TextField.Root
