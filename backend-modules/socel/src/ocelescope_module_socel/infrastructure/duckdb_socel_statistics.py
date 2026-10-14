@@ -7,7 +7,16 @@ from ocelescope.ocel.constants.pm4py import (
 )
 from ocelescope.ocel.constants.tables import EVENTS_TABLE, OBJECT_CHANGES_TABLE, OBJECTS_TABLE
 from socel import SOCEL
-from socel.schema import CONTAINED_IN, EVENT_RECORDS, FLOW, INTERVAL_RECORDS, SOCEL_CLASS
+from socel.analysis import AnalysisWindow, flow_quantities
+from socel.domain import FlowInstance
+from socel.schema import (
+    CONTAINED_IN,
+    EVENT_RECORDS,
+    FLOW,
+    INTERVAL_RECORDS,
+    SOCEL_CLASS,
+    SOCEL_END_TIME,
+)
 
 from ocelescope_module_socel.application.ports.socel_statistics import InstanceOrder
 from ocelescope_module_socel.domain.models.class_counts import ClassCount, ClassCounts
@@ -16,6 +25,11 @@ from ocelescope_module_socel.domain.models.flow_inventory import (
     FlowInstancePage,
     FlowInstanceRow,
     FlowSummary,
+)
+from ocelescope_module_socel.domain.models.flow_quantities import (
+    FlowQuantity,
+    Period,
+    PeriodQuantity,
 )
 from ocelescope_module_socel.domain.models.socel_status import SocelStatus
 
@@ -31,6 +45,15 @@ _INSTANCES = f"""
     UNION SELECT flow_id, object_id FROM {CONTAINED_IN.name}
     UNION SELECT flow_id, parent_object_id FROM {CONTAINED_IN.name}
 """
+
+
+# The step from one period to the next, per period.
+_STEP: dict[Period, str] = {
+    "hour": "INTERVAL 1 HOUR",
+    "day": "INTERVAL 1 DAY",
+    "week": "INTERVAL 7 DAY",
+    "month": "INTERVAL 1 MONTH",
+}
 
 
 def _is(column: str, root: str) -> str:
@@ -215,6 +238,27 @@ class DuckDbSocelStatistics:
             path=_path_to(socel, flow_id, inside) if inside is not None else (),
         )
 
+    def flow_quantities(self, socel: SOCEL, period: Period) -> tuple[FlowQuantity, ...]:
+        counted = _uncovered_instances(socel)
+        windows = _calendar_windows(socel, period)
+        of_flow: dict[str, list[PeriodQuantity]] = {}
+        for part in flow_quantities(socel, windows, counted):
+            of_flow.setdefault(part.flow_id, []).append(
+                PeriodQuantity(start=part.window.start, inflow=part.inflow, outflow=-part.outflow)
+            )
+        return tuple(
+            FlowQuantity(
+                flow_id=flow_id,
+                unit=unit,
+                inflow=sum(part.inflow for part in of_flow.get(flow_id, [])),
+                outflow=sum(part.outflow for part in of_flow.get(flow_id, [])),
+                by_period=tuple(of_flow.get(flow_id, [])),
+            )
+            for flow_id, unit in socel.sql(
+                f"SELECT flow_id, unit FROM {FLOW.name} ORDER BY flow_id"
+            ).fetchall()
+        )
+
     def class_counts(self, socel: SOCEL) -> ClassCounts:
         objects = socel.sql(
             f"""
@@ -231,6 +275,68 @@ class DuckDbSocelStatistics:
             objects=_class_counts(objects, _HANDLING_UNIT),
             events=_class_counts(events, _OPERATION),
         )
+
+
+def _uncovered_instances(socel: SOCEL) -> tuple[FlowInstance, ...]:
+    """The flow instances with records that lie inside no instance with records
+    of its own: those whose records are not held by an outer one already."""
+    rows = socel.sql(
+        f"""
+        WITH RECURSIVE
+        recorded AS (
+            SELECT flow_id, object_id FROM {INTERVAL_RECORDS.name}
+            UNION SELECT flow_id, object_id FROM {EVENT_RECORDS.name}
+        ),
+        -- Every instance with each instance it lies inside, directly or further out.
+        outward(flow_id, object_id, outer_id, depth) AS (
+            SELECT flow_id, object_id, parent_object_id, 1 FROM {CONTAINED_IN.name}
+            UNION ALL
+            SELECT outward.flow_id, outward.object_id, inside.parent_object_id, depth + 1
+            FROM outward JOIN {CONTAINED_IN.name} inside
+              ON inside.flow_id = outward.flow_id AND inside.object_id = outward.outer_id
+            WHERE depth < 50
+        ),
+        covered AS (
+            SELECT outward.flow_id, outward.object_id
+            FROM outward SEMI JOIN recorded
+              ON recorded.flow_id = outward.flow_id AND recorded.object_id = outward.outer_id
+        )
+        SELECT object_id, flow_id FROM recorded ANTI JOIN covered USING (flow_id, object_id)
+        """
+    ).fetchall()
+    return tuple(FlowInstance(object_id, flow_id) for object_id, flow_id in rows)
+
+
+def _calendar_windows(socel: SOCEL, period: Period) -> tuple[AnalysisWindow, ...]:
+    """The calendar periods (weeks from Monday) from the first record's start to
+    the last one's end, as half-open windows."""
+    step = _STEP[period]
+    event_end = (
+        f'event."{SOCEL_END_TIME}"'
+        if _has_column(socel, EVENTS_TABLE, SOCEL_END_TIME)
+        else "NULL::TIMESTAMP"
+    )
+    rows = socel.sql(
+        f"""
+        WITH bound AS (
+            SELECT min(start_time) AS first, max(end_time) AS last
+            FROM {INTERVAL_RECORDS.name}
+            UNION ALL
+            SELECT min(event."{TIMESTAMP_COL}"),
+                   max(coalesce({event_end}, event."{TIMESTAMP_COL}"))
+            FROM {EVENT_RECORDS.name} record
+            JOIN {EVENTS_TABLE} event ON event."{EID_COL}" = record.event_id
+        ),
+        slot AS (
+            SELECT unnest(generate_series(
+                date_trunc('{period}', min(first)), max(last), {step}
+            )) AS start
+            FROM bound
+        )
+        SELECT start, start + {step} FROM slot ORDER BY start
+        """
+    ).fetchall()
+    return tuple(AnalysisWindow(start, end) for start, end in rows)
 
 
 def _path_to(socel: SOCEL, flow_id: str, object_id: str) -> tuple[str, ...]:

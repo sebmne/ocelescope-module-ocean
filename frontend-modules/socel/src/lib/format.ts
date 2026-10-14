@@ -34,3 +34,10 @@ export function formatPeriod(from: string, to: string) {
 export function parseUtc(timestamp: string) {
   return new Date(/(?:Z|[+-]\d\d:\d\d)$/i.test(timestamp) ? timestamp : `${timestamp}Z`);
 }
+
+/** A measured amount: whole numbers from a thousand on, else four significant digits. */
+export function formatAmount(value: number) {
+  return Math.abs(value) >= 1000
+    ? value.toLocaleString(undefined, { maximumFractionDigits: 0 })
+    : value.toLocaleString(undefined, { maximumSignificantDigits: 4 });
+}

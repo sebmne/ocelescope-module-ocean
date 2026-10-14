@@ -3,7 +3,10 @@
 `@ocelescope/core`, `@ocelescope/api-base`, `@ocelescope/management` and
 `@ocelescope/resources` from the branch `feat/ocel-extensions` of
 promi4s/ocelescope (commit 78e3624), which is 0.10.1 plus OCEL extensions and
-the new pickers and charts. They are the packages that differ from the
+the new pickers and charts. `@ocelescope/core` also stacks bars with
+Plotly's `relative` mode (negative parts below zero), a change to
+`packages/core/src/components/charts/BarChart.tsx` not yet committed on the
+branch. They are the packages that differ from the
 published 0.10.1; everything else comes from npm. `pnpm-workspace.yaml` maps
 them in through `overrides`.
 

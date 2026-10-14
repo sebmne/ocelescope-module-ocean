@@ -5,6 +5,7 @@ from ocelescope_module_socel.api.routes import (
     classification,
     flow_records,
     flows,
+    impact,
     status,
     taxonomy,
 )
@@ -14,6 +15,7 @@ from ocelescope_module_socel.api.routes import (
 router = APIRouter()
 router.include_router(status.router)
 router.include_router(flows.router)
+router.include_router(impact.router)
 router.include_router(classes.router)
 router.include_router(taxonomy.router)
 router.include_router(classification.router)

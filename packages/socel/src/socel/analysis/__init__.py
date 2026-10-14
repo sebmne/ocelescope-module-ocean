@@ -32,7 +32,13 @@ from socel.analysis.impact import (
     impact_quantity,
     product_footprints,
 )
-from socel.analysis.quantification import AnalysisWindow, quantity, share
+from socel.analysis.quantification import (
+    AnalysisWindow,
+    FlowWindowQuantity,
+    flow_quantities,
+    quantity,
+    share,
+)
 
 __all__ = [
     "AllocatedImpactResult",
@@ -49,6 +55,7 @@ __all__ = [
     "FlowCarriedQuantity",
     "FlowEventQuantity",
     "FlowSelection",
+    "FlowWindowQuantity",
     "HandlingUnitImpact",
     "HandlingUnitQuantity",
     "ImpactFactors",
@@ -58,6 +65,7 @@ __all__ = [
     "attribute",
     "carry",
     "event_quantities",
+    "flow_quantities",
     "impact_allocations",
     "impact_events",
     "impact_quantity",

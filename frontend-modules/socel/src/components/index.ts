@@ -19,6 +19,7 @@ export {
   Grid,
   IconButton,
   Progress,
+  SegmentedControl,
   Select,
   Text,
   TextField,

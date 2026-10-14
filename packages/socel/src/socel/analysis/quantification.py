@@ -1,5 +1,6 @@
 """Flow quantification over time."""
 
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from datetime import datetime
 
@@ -7,7 +8,7 @@ from ocelescope.ocel.constants.pm4py import EID_COL, TIMESTAMP_COL
 from ocelescope.ocel.constants.tables import EVENTS_TABLE
 
 from socel.domain import EventRecord, FlowInstance, FlowRecord, IntervalRecord
-from socel.schema import SOCEL_END_TIME
+from socel.schema import EVENT_RECORDS, INTERVAL_RECORDS, SOCEL_END_TIME
 from socel.socel import SOCEL
 from socel.validation.queries import identifier
 
@@ -63,6 +64,112 @@ def quantity(
             for record in socel.measurements.for_instance(instance)
         ),
         start=0.0,
+    )
+
+
+@dataclass(frozen=True, slots=True)
+class FlowWindowQuantity:
+    """The quantity of a flow inside one window, summed over flow instances.
+
+    ``inflow`` sums the shares of the records into the objects (positive),
+    ``outflow`` those out of them (negative); ``quantity`` is their sum.
+    """
+
+    flow_id: str
+    window: AnalysisWindow
+    quantity: float
+    inflow: float
+    outflow: float
+
+
+def flow_quantities(
+    socel: SOCEL,
+    windows: Sequence[AnalysisWindow],
+    instances: Iterable[FlowInstance] | None = None,
+) -> tuple[FlowWindowQuantity, ...]:
+    """Return, per flow and window, the sum of ``quantity`` over flow instances.
+
+    The same values as summing :func:`quantity` (Definition 6.1.2), computed in
+    one query over all records instead of record by record, so it scales to
+    large logs. ``instances`` limits the sum to those flow instances; ``None``
+    takes every instance with records. Windows without a share are left out.
+    """
+    if not windows:
+        return ()
+    event_columns = {
+        str(row[0])
+        for row in socel.con.execute(f"DESCRIBE {identifier(EVENTS_TABLE)}").fetchall()
+    }
+    event_end = (
+        f"event.{identifier(SOCEL_END_TIME)}"
+        if SOCEL_END_TIME in event_columns
+        else "NULL::TIMESTAMP"
+    )
+    if instances is None:
+        counted, parameters = "SELECT * FROM record", {}
+    else:
+        listed = tuple(instances)
+        counted = """
+            SELECT * FROM record
+            SEMI JOIN (
+                SELECT unnest($objects) AS object_id, unnest($flows) AS flow_id
+            ) chosen USING (object_id, flow_id)
+        """
+        parameters = {
+            "objects": [instance.object_id for instance in listed],
+            "flows": [instance.flow_id for instance in listed],
+        }
+    rows = socel.con.execute(
+        f"""
+        WITH window_ AS (
+            SELECT unnest(range(len($starts))) AS id,
+                   unnest($starts)::TIMESTAMP AS a, unnest($ends)::TIMESTAMP AS b
+        ),
+        -- span(r) (Definition 6.1.1): the interval, or the event's observed
+        -- extent; an event-linked record without an end is a point (t is NULL).
+        record AS (
+            SELECT object_id, flow_id, quantity, start_time AS s, end_time AS t
+            FROM {identifier(INTERVAL_RECORDS.name)}
+            UNION ALL
+            SELECT record.object_id, record.flow_id, record.quantity,
+                   event.{identifier(TIMESTAMP_COL)}, {event_end}
+            FROM {identifier(EVENT_RECORDS.name)} record
+            JOIN {identifier(EVENTS_TABLE)} event
+              ON event.{identifier(EID_COL)} = record.event_id
+        ),
+        counted AS ({counted}),
+        -- share(r, w) for every record and window it has a share in.
+        part AS (
+            SELECT counted.flow_id, window_.id,
+                   counted.quantity * epoch(least(t, b) - greatest(s, a)) / epoch(t - s)
+                       AS quantity
+            FROM counted JOIN window_ ON s < b AND t > a
+            WHERE t IS NOT NULL
+            UNION ALL
+            SELECT counted.flow_id, window_.id, counted.quantity
+            FROM counted JOIN window_ ON a <= s AND s < b
+            WHERE t IS NULL
+        )
+        SELECT flow_id, id, sum(quantity),
+               coalesce(sum(quantity) FILTER (quantity > 0), 0),
+               coalesce(sum(quantity) FILTER (quantity < 0), 0)
+        FROM part GROUP BY 1, 2 ORDER BY 1, 2
+        """,
+        {
+            "starts": [window.start for window in windows],
+            "ends": [window.end for window in windows],
+            **parameters,
+        },
+    ).fetchall()
+    return tuple(
+        FlowWindowQuantity(
+            str(flow_id),
+            windows[int(window_id)],
+            float(total),
+            float(inflow),
+            float(outflow),
+        )
+        for flow_id, window_id, total, inflow, outflow in rows
     )
 
 

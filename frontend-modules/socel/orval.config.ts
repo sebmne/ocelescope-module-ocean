@@ -5,6 +5,10 @@ import { defineConfig } from "@ocelescope/api-config";
 // sOCEL backend module), and src/lib/fetcher.ts as the request function.
 export default defineConfig({
   socel: {
-    output: { target: "./src/api/socel.ts" },
+    output: {
+      target: "./src/api/socel.ts",
+      // A calculation, not a change: asked like a read, so its answers are cached.
+      override: { operations: { calculateImpact: { query: { useQuery: true, useMutation: false } } } },
+    },
   },
 });

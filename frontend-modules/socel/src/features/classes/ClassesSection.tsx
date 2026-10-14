@@ -92,7 +92,14 @@ function Column({
     <Box>
       <SubHeading icon={icon} title={title} />
       <Box style={{ height: 300 }} mb="4">
-        <SunburstChart rows={rows} x={levels[0]} y="count" path={levels} colorScope="socelClass" colorOf={colorOf} />
+        <SunburstChart
+          rows={rows}
+          x={levels[0]}
+          y="count"
+          path={levels}
+          colorScope="socelClass"
+          colorOf={colorOf}
+        />
       </Box>
       <BarTree nodes={toBars(counts)} format={formatCount} openDepth={2} />
     </Box>

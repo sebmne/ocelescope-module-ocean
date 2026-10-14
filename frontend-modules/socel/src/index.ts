@@ -7,6 +7,7 @@ import WaveIcon from "./assets/WaveIcon";
 const OverviewPage = dynamic(() => import("./pages/OverviewPage"), { ssr: false });
 const ConfigPage = dynamic(() => import("./pages/ConfigPage"), { ssr: false });
 const NewSocelPage = dynamic(() => import("./pages/NewSocelPage"), { ssr: false });
+const CalculatorPage = dynamic(() => import("./pages/CalculatorPage"), { ssr: false });
 
 // The module's table of contents: every page, and how it appears in the navigation.
 export default defineModule({
@@ -32,6 +33,12 @@ export default defineModule({
       label: "Overview",
       requiresOcel: ["socel"],
       component: OverviewPage,
+    }),
+    defineModuleRoute({
+      name: "calculator",
+      label: "Calculator",
+      requiresOcel: ["socel"],
+      component: CalculatorPage,
     }),
   ],
   icon: WaveIcon,

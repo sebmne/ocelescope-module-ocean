@@ -816,7 +816,7 @@ packages:
       react-dom: ^19.3.0
 
   '@ocelescope/core@file:vendor/ocelescope/ocelescope-core-0.10.1.tgz':
-    resolution: {integrity: sha512-7paYEI9Vck0gK2FQk/4dc7ViSYiwHWgoIhBSqcnf0btYcI+IXcXjHPnvPL55yskV1nU8Nr3lKQdMknxYY2bLUw==, tarball: file:vendor/ocelescope/ocelescope-core-0.10.1.tgz}
+    resolution: {integrity: sha512-CalUv7d6wqSeP01YmGGDaCN+Uw/C1AGsX7d1RRUO3lXW7tBQvPGdVRzuGVTe6Cp50VMAqh+Ba8QFsHL3/7OBJQ==, tarball: file:vendor/ocelescope/ocelescope-core-0.10.1.tgz}
     version: 0.10.1
     peerDependencies:
       '@mantine/core': ^9.5.1

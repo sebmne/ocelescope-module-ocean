@@ -4,6 +4,7 @@ from socel import SOCEL
 
 from ocelescope_module_socel.domain.models.class_counts import ClassCounts
 from ocelescope_module_socel.domain.models.flow_inventory import FlowInstancePage, FlowSummary
+from ocelescope_module_socel.domain.models.flow_quantities import FlowQuantity, Period
 from ocelescope_module_socel.domain.models.socel_status import SocelStatus
 
 # How a page of flow instances is ordered: largest quantity first, or by object id.
@@ -38,6 +39,13 @@ class SocelStatistics(Protocol):
         """A page of the objects a flow is observed at. `object_type` keeps one
         type, `inside` the objects directly inside the given one, `search` those
         whose id contains the text."""
+        ...
+
+    def flow_quantities(self, socel: SOCEL, period: Period) -> tuple[FlowQuantity, ...]:
+        """What each flow's records hold over the log and per calendar period,
+        into the objects and out of them, each record by its share of the period
+        (thesis, Def. 6.1.1). Records of
+        an instance inside an instance that has records of its own are left out."""
         ...
 
     def class_counts(self, socel: SOCEL) -> ClassCounts:

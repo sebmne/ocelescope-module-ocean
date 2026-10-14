@@ -18,6 +18,7 @@ from ocelescope_module_socel.application.ports.record_importer import RecordImpo
 from ocelescope_module_socel.application.ports.socel_statistics import SocelStatistics
 from ocelescope_module_socel.application.ports.upload_store import UploadStore
 from ocelescope_module_socel.application.use_cases.build_socel import BuildSocel
+from ocelescope_module_socel.application.use_cases.calculate_impact import CalculateImpact
 from ocelescope_module_socel.application.use_cases.get_class_counts import GetClassCounts
 from ocelescope_module_socel.application.use_cases.get_class_taxonomies import (
     GetClassTaxonomies,
@@ -103,6 +104,12 @@ def get_flow_instances(
     statistics: Annotated[SocelStatistics, Depends(get_socel_statistics)],
 ) -> GetFlowInstances:
     return GetFlowInstances(statistics=statistics)
+
+
+def get_calculate_impact(
+    statistics: Annotated[SocelStatistics, Depends(get_socel_statistics)],
+) -> CalculateImpact:
+    return CalculateImpact(statistics=statistics)
 
 
 def get_class_counts(
