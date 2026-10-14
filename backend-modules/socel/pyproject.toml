@@ -28,7 +28,9 @@ extend-exclude = ["*.md"]
 select = ["E", "F", "I", "UP", "B"]
 
 [tool.pyright]
-include = ["src"]
+include = ["src", "tests"]
+# The tests import their helpers (api.py, example_log.py) by module name, as pytest runs them.
+extraPaths = ["tests"]
 typeCheckingMode = "standard"
 
 # The architecture, enforced: `pnpm run check:backend` (repository root) runs these contracts.
@@ -65,3 +67,6 @@ type = "forbidden"
 source_modules = ["ocelescope_module_socel.api.routes", "ocelescope_module_socel.api.router"]
 forbidden_modules = ["ocelescope_module_socel.infrastructure"]
 allow_indirect_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
