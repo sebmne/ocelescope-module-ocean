@@ -8,6 +8,10 @@ from ocelescope import OCELExtensionError
 from ocelescope_backend.app.dependencies import ApiOcel, ApiSession
 from socel import SOCEL
 
+from ocelescope_module_socel.application.ports.attribute_flow_importer import (
+    AttributeFlowImporter,
+)
+from ocelescope_module_socel.application.ports.containment_writer import ContainmentWriter
 from ocelescope_module_socel.application.ports.log_classifier import LogClassifier
 from ocelescope_module_socel.application.ports.log_store import LogStore
 from ocelescope_module_socel.application.ports.record_importer import RecordImporter
@@ -26,7 +30,14 @@ from ocelescope_module_socel.application.use_cases.get_log_classification import
     GetLogClassification,
 )
 from ocelescope_module_socel.application.use_cases.get_socel_status import GetSocelStatus
+from ocelescope_module_socel.application.use_cases.preview_record_file import PreviewRecordFile
 from ocelescope_module_socel.application.use_cases.upload_record_file import UploadRecordFile
+from ocelescope_module_socel.infrastructure.duckdb_attribute_flow_importer import (
+    DuckDbAttributeFlowImporter,
+)
+from ocelescope_module_socel.infrastructure.duckdb_containment_writer import (
+    DuckDbContainmentWriter,
+)
 from ocelescope_module_socel.infrastructure.duckdb_log_classifier import DuckDbLogClassifier
 from ocelescope_module_socel.infrastructure.duckdb_record_importer import DuckDbRecordImporter
 from ocelescope_module_socel.infrastructure.duckdb_socel_statistics import DuckDbSocelStatistics
@@ -112,6 +123,14 @@ def get_record_importer() -> RecordImporter:
     return DuckDbRecordImporter()
 
 
+def get_attribute_flow_importer() -> AttributeFlowImporter:
+    return DuckDbAttributeFlowImporter()
+
+
+def get_containment_writer() -> ContainmentWriter:
+    return DuckDbContainmentWriter()
+
+
 def get_upload_store(session: ApiSession) -> UploadStore:
     return SessionUploadStore(session)
 
@@ -133,10 +152,26 @@ def get_upload_record_file(
     return UploadRecordFile(importer=importer, uploads=uploads)
 
 
+def get_preview_record_file(
+    importer: Annotated[RecordImporter, Depends(get_record_importer)],
+    uploads: Annotated[UploadStore, Depends(get_upload_store)],
+) -> PreviewRecordFile:
+    return PreviewRecordFile(importer=importer, uploads=uploads)
+
+
 def get_build_socel(
     classifier: Annotated[LogClassifier, Depends(get_log_classifier)],
     importer: Annotated[RecordImporter, Depends(get_record_importer)],
+    attributes: Annotated[AttributeFlowImporter, Depends(get_attribute_flow_importer)],
+    containment: Annotated[ContainmentWriter, Depends(get_containment_writer)],
     uploads: Annotated[UploadStore, Depends(get_upload_store)],
     store: Annotated[LogStore, Depends(get_log_store)],
 ) -> BuildSocel:
-    return BuildSocel(classifier=classifier, importer=importer, uploads=uploads, store=store)
+    return BuildSocel(
+        classifier=classifier,
+        importer=importer,
+        attributes=attributes,
+        containment=containment,
+        uploads=uploads,
+        store=store,
+    )

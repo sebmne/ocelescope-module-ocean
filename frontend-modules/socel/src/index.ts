@@ -6,6 +6,7 @@ import WaveIcon from "./assets/WaveIcon";
 // `document` as they are imported: they stay out of the server render.
 const OverviewPage = dynamic(() => import("./pages/OverviewPage"), { ssr: false });
 const ConfigPage = dynamic(() => import("./pages/ConfigPage"), { ssr: false });
+const NewSocelPage = dynamic(() => import("./pages/NewSocelPage"), { ssr: false });
 
 // The module's table of contents: every page, and how it appears in the navigation.
 export default defineModule({
@@ -15,9 +16,15 @@ export default defineModule({
   authors: [{ name: "Menne, Sebastian" }],
   routes: [
     defineModuleRoute({
+      name: "new",
+      label: "New sOCEL",
+      requiresOcel: true,
+      component: NewSocelPage,
+    }),
+    defineModuleRoute({
       name: "config",
       label: "sOCEL config",
-      requiresOcel: true,
+      requiresOcel: ["socel"],
       component: ConfigPage,
     }),
     defineModuleRoute({

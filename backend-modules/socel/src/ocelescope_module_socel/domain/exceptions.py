@@ -30,6 +30,19 @@ class UndefinedFlow(SocelBuildError):
         super().__init__(f"The flow {flow_id!r} needs a unit and a category.")
 
 
+class UnknownAttribute(SocelBuildError):
+    def __init__(self, attribute: str) -> None:
+        super().__init__(f"The log's events have no numeric attribute {attribute!r}.")
+
+
+class SeveralParents(SocelBuildError):
+    def __init__(self, flow_id: str, objects: int, example: str) -> None:
+        super().__init__(
+            f"For {flow_id!r}, {objects} object(s) would lie inside more than one "
+            f"object, e.g. {example!r}; an object lies inside one at most."
+        )
+
+
 class UnknownCategory(SocelBuildError):
     def __init__(self, category: str) -> None:
         super().__init__(f"{category!r} is no flow category of the taxonomy.")

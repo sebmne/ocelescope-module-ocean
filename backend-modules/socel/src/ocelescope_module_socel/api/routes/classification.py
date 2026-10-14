@@ -2,9 +2,13 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends
 from ocelescope_backend.app.dependencies import ApiOcel
+from pydantic import Field
 
 from ocelescope_module_socel.api.dependencies import get_build_socel, get_log_classification
-from ocelescope_module_socel.api.routes.flow_records import FlowDefinitionModel
+from ocelescope_module_socel.api.routes.flow_records import (
+    ColumnMappingModel,
+    FlowDefinitionModel,
+)
 from ocelescope_module_socel.api.schema import ApiModel
 from ocelescope_module_socel.application.use_cases.build_socel import (
     BuildSocel,
@@ -15,6 +19,8 @@ from ocelescope_module_socel.application.use_cases.get_log_classification import
     GetLogClassification,
     GetLogClassificationCommand,
 )
+from ocelescope_module_socel.domain.models.attribute_flows import AttributeFlow, Direction
+from ocelescope_module_socel.domain.models.containment import TypeContainment
 from ocelescope_module_socel.domain.models.log_classification import (
     LogClassification,
     TypeClassification,
@@ -49,15 +55,48 @@ class LogClassificationModel(ApiModel):
 
 
 class RecordsToImportModel(ApiModel):
-    # The id an uploaded record file is kept under, and unit and category of
-    # each of its flows.
+    # The id an uploaded record file is kept under, and which of its columns
+    # holds what.
     upload_id: str
-    flows: dict[str, FlowDefinitionModel]
+    mapping: ColumnMappingModel
 
     def to_domain(self) -> RecordsToImport:
-        return RecordsToImport(
-            upload_id=self.upload_id,
-            flows={flow_id: flow.to_domain() for flow_id, flow in self.flows.items()},
+        return RecordsToImport(upload_id=self.upload_id, mapping=self.mapping.to_domain())
+
+
+class AttributeFlowModel(ApiModel):
+    # An event attribute taken as a flow: each value becomes a record at its
+    # event, observed at the event's objects of the type. "out" stores the
+    # amounts negative, as the sOCEL marks what flows out of an object; a value
+    # that is negative already is taken as it is.
+    attribute: str
+    flow_id: str
+    object_type: str
+    direction: Direction = "in"
+
+    def to_domain(self) -> AttributeFlow:
+        return AttributeFlow(
+            attribute=self.attribute,
+            flow_id=self.flow_id,
+            object_type=self.object_type,
+            direction=self.direction,
+        )
+
+
+class TypeContainmentModel(ApiModel):
+    # Objects of object_type lie inside the object of parent_type the
+    # object-to-object relation `qualifier` leads them to, for each flow.
+    object_type: str
+    parent_type: str
+    qualifier: str
+    flows: list[str]
+
+    def to_domain(self) -> TypeContainment:
+        return TypeContainment(
+            object_type=self.object_type,
+            parent_type=self.parent_type,
+            qualifier=self.qualifier,
+            flows=tuple(self.flows),
         )
 
 
@@ -67,7 +106,11 @@ class BuildSocelRequest(ApiModel):
     # named keep what they have.
     activities: dict[str, str | None]
     object_types: dict[str, str | None]
+    # Unit, category and reference of every flow the build brings.
+    flows: dict[str, FlowDefinitionModel] = Field(default_factory=dict)
     records: RecordsToImportModel | None = None
+    attribute_flows: list[AttributeFlowModel] = Field(default_factory=list)
+    containment: list[TypeContainmentModel] = Field(default_factory=list)
 
 
 class BuiltSocelModel(ApiModel):
@@ -97,14 +140,18 @@ def build_socel(
     use_case: Annotated[BuildSocel, Depends(get_build_socel)],
 ) -> BuiltSocelModel:
     """Adds a new log to the session: the given one as an sOCEL, classified per
-    activity and object type, with the flow records of an uploaded file."""
+    activity and object type, with the flow records of an uploaded file and of
+    event attributes."""
     ocel_id = use_case.execute(
         BuildSocelCommand(
             ocel=ocel,
             name=request.name,
             activities=request.activities,
             object_types=request.object_types,
+            flows={flow_id: flow.to_domain() for flow_id, flow in request.flows.items()},
             records=request.records.to_domain() if request.records else None,
+            attribute_flows=tuple(flow.to_domain() for flow in request.attribute_flows),
+            containment=tuple(item.to_domain() for item in request.containment),
         )
     )
     response = BuiltSocelModel(ocel_id=ocel_id)

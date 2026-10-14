@@ -1,5 +1,5 @@
-import { Select } from "../../components";
-import type { ClassOption } from "./classOptions";
+import { Select } from "@r4pm/components/ui";
+import type { ClassOption } from "../lib/classOptions";
 
 // Radix has no empty value: this one stands for "no class".
 const NONE = "__none__";
@@ -9,10 +9,17 @@ interface ClassSelectProps {
   value: string | null;
   onChange: (value: string | null) => void;
   label: string;
+  width?: number;
 }
 
 // Picks a class or category out of a taxonomy, shown as the tree it is.
-export default function ClassSelect({ options, value, onChange, label }: ClassSelectProps) {
+export default function ClassSelect({
+  options,
+  value,
+  onChange,
+  label,
+  width = 240,
+}: ClassSelectProps) {
   return (
     <Select.Root
       value={value ?? NONE}
@@ -22,7 +29,7 @@ export default function ClassSelect({ options, value, onChange, label }: ClassSe
         aria-label={label}
         variant={value === null ? "surface" : "soft"}
         color={value === null ? "gray" : undefined}
-        style={{ width: 240 }}
+        style={{ width }}
       >
         {value ?? <span style={{ color: "var(--gray-9)" }}>–</span>}
       </Select.Trigger>

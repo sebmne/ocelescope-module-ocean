@@ -11,19 +11,46 @@ from socel.schema import EVENT_RECORDS, FLOW, INTERVAL_RECORDS, SOCEL_END_TIME
 
 from ocelescope_module_socel.domain.exceptions import InvalidRecordFile
 from ocelescope_module_socel.domain.models.record_file import (
+    ColumnMapping,
     FlowDefinition,
     FlowInFile,
     IssueKind,
+    RecordFileColumns,
     RecordFilePreview,
     RecordIssue,
+    SampleIssue,
 )
 
-COLUMNS = ("flow", "object", "quantity", "start_time", "end_time", "event")
+# What a column of a record file can hold.
+ROLES = ("flow", "object", "quantity", "start_time", "end_time", "event")
 _EXAMPLES = 5
+# The first rows of a file that are shown as they are.
+SAMPLE_ROWS = 8
+
+# A number with a decimal comma, with or without dots between the thousands.
+_QUANTITY = """
+    coalesce(
+        TRY_CAST(quantity_text AS DOUBLE),
+        CASE WHEN regexp_matches(quantity_text, '^[+-]?[0-9.]*,[0-9]+$')
+             THEN TRY_CAST(replace(replace(quantity_text, '.', ''), ',', '.') AS DOUBLE) END
+    )
+"""
+
+
+def _time(text: str) -> str:
+    """SQL for the time a text gives: ISO with or without offset, kept in UTC,
+    or day.month.year as German exports write it."""
+    return f"""
+        coalesce(
+            TRY_CAST(TRY_CAST({text} AS TIMESTAMPTZ) AS TIMESTAMP),
+            try_strptime({text}, ['%d.%m.%Y %H:%M:%S', '%d.%m.%Y %H:%M', '%d.%m.%Y'])
+        )
+    """
+
 
 # Every row of the file with its values read and what, if anything, keeps it
-# out: `issue` is NULL for the rows that can be taken over. Times are read with
-# their offset and kept in UTC, as the sOCEL tables hold them.
+# out: `issue` is NULL for the rows that can be taken over. Times are kept in
+# UTC, as the sOCEL tables hold them.
 #
 # A row is an interval record (start and end, no event), an event-linked record
 # (an event, no start; an end is the event's), or an event's end alone (event
@@ -41,9 +68,9 @@ _ROWS = f"""
         FROM record_file
     ), typed AS (
         SELECT *,
-            TRY_CAST(quantity_text AS DOUBLE) AS quantity,
-            TRY_CAST(TRY_CAST(start_text AS TIMESTAMPTZ) AS TIMESTAMP) AS start_time,
-            TRY_CAST(TRY_CAST(end_text AS TIMESTAMPTZ) AS TIMESTAMP) AS end_time,
+            {_QUANTITY} AS quantity,
+            {_time("start_text")} AS start_time,
+            {_time("end_text")} AS end_time,
             start_text IS NOT NULL AND end_text IS NOT NULL AND event IS NULL AS is_interval,
             start_text IS NULL AND event IS NOT NULL AS is_event,
             start_text IS NULL AND event IS NOT NULL AND end_text IS NOT NULL
@@ -84,30 +111,61 @@ class DuckDbRecordImporter:
     """Reads the record file with DuckDB and checks it against the log's own
     database, so that a large file is never walked row by row in Python."""
 
-    def preview(self, ocel: OCEL, content: bytes) -> RecordFilePreview:
-        cursor = _with_record_file(ocel, content)
+    def columns(self, ocel: OCEL, content: bytes) -> RecordFileColumns:
+        cursor = ocel.con.cursor()
         try:
-            rows, usable_rows, event_ends, records_from, records_to = cursor.execute(
+            file, delimiter = _read(cursor, content)
+            rows = file.count("*").fetchall()[0][0]
+            sample = cursor.execute(f"SELECT * FROM file LIMIT {SAMPLE_ROWS}").fetchall()
+            names = file.columns
+        except duckdb.Error as error:
+            raise InvalidRecordFile(f"The file cannot be read as CSV: {error}") from error
+        finally:
+            cursor.close()
+        return RecordFileColumns(
+            columns=tuple(names),
+            rows=rows,
+            delimiter=delimiter,
+            sample=tuple(
+                tuple(value.strip() or None if value is not None else None for value in row)
+                for row in sample
+            ),
+        )
+
+    def preview(self, ocel: OCEL, content: bytes, mapping: ColumnMapping) -> RecordFilePreview:
+        cursor = _with_record_file(ocel, content, mapping)
+        try:
+            (
+                rows,
+                usable_rows,
+                event_ends,
+                records_from,
+                records_to,
+                decimal_comma,
+                day_first_dates,
+            ) = cursor.execute(
                 f"""
                 SELECT count(*), count(*) FILTER (issue IS NULL),
                        count(DISTINCT event) FILTER (issue IS NULL AND is_event
                                                      AND end_time IS NOT NULL),
                        min(start_time) FILTER (issue IS NULL AND is_interval),
-                       max(end_time) FILTER (issue IS NULL AND is_interval)
+                       max(end_time) FILTER (issue IS NULL AND is_interval),
+                       coalesce(bool_or(contains(quantity_text, ','))
+                                FILTER (issue IS NULL), false),
+                       coalesce(bool_or(
+                           TRY_CAST(coalesce(start_text, end_text) AS TIMESTAMPTZ) IS NULL
+                           AND coalesce(start_time, end_time) IS NOT NULL
+                       ) FILTER (issue IS NULL), false)
                 FROM ({_ROWS})
                 """
             ).fetchall()[0]
-            known = (
-                {
-                    flow_id: FlowDefinition(unit=unit, category=category, external_ref=ref)
-                    for flow_id, unit, category, ref in cursor.execute(
-                        f"SELECT flow_id, unit, category, external_ref FROM {FLOW.name}"
-                    ).fetchall()
-                    if unit and category
-                }
-                if _has_table(cursor, FLOW.name)
-                else {}
-            )
+            sample_issues = cursor.execute(
+                f"""
+                SELECT line - 2, issue FROM ({_ROWS})
+                WHERE line <= {SAMPLE_ROWS + 1} AND issue IS NOT NULL
+                ORDER BY line
+                """
+            ).fetchall()
             flows = cursor.execute(
                 f"""
                 SELECT flow, count(*), count(*) FILTER (issue IS NULL),
@@ -150,7 +208,6 @@ class DuckDbRecordImporter:
                     interval_records=intervals,
                     event_records=events,
                     objects=objects,
-                    known=known.get(flow_id),
                 )
                 for flow_id, count, usable, intervals, events, objects in flows
             ),
@@ -162,15 +219,19 @@ class DuckDbRecordImporter:
             ),
             records_from=records_from,
             records_to=records_to,
+            sample_issues=tuple(SampleIssue(row=row, kind=kind) for row, kind in sample_issues),
+            decimal_comma=decimal_comma,
+            day_first_dates=day_first_dates,
         )
 
     def write(
         self,
         ocel: OCEL,
         content: bytes,
+        mapping: ColumnMapping,
         flows: Mapping[str, FlowDefinition],
     ) -> None:
-        cursor = _with_record_file(ocel, content)
+        cursor = _with_record_file(ocel, content, mapping)
         try:
             cursor.execute(
                 "CREATE TEMP TABLE defined_flow "
@@ -238,34 +299,55 @@ class DuckDbRecordImporter:
             cursor.close()
 
 
-def _with_record_file(ocel: OCEL, content: bytes) -> duckdb.DuckDBPyConnection:
-    """A cursor on the log's database that also sees the file as `record_file`:
-    its six columns as text, and each row's line number in the file."""
+def _quoted(name: str) -> str:
+    return '"' + name.replace('"', '""') + '"'
+
+
+def _read(cursor: duckdb.DuckDBPyConnection, content: bytes) -> tuple[duckdb.DuckDBPyRelation, str]:
+    """The CSV as a relation named `file`, every column as text, and the
+    character that separates its columns. DuckDB finds out the delimiter; the
+    first line names the columns."""
     with tempfile.TemporaryDirectory() as folder:
         path = Path(folder) / "records.csv"
         path.write_bytes(content)
-        reader = duckdb.connect()
         try:
-            file = reader.read_csv(str(path), header=True, all_varchar=True, delimiter=",")
-            names = {name.strip().lower(): name for name in file.columns}
-            missing = [column for column in COLUMNS if column not in names]
-            if missing:
-                raise InvalidRecordFile(
-                    f"The file lacks the column(s) {', '.join(missing)}. "
-                    f"It needs: {', '.join(COLUMNS)}."
-                )
-            selected = ", ".join(f'"{names[column]}" AS {column}' for column in COLUMNS)
-            table = reader.sql(
-                f"SELECT row_number() OVER () + 1 AS line, {selected} FROM file"
+            (delimiter,) = cursor.execute(
+                "SELECT Delimiter FROM sniff_csv(?)", [str(path)]
+            ).fetchall()[0]
+            table = cursor.read_csv(
+                str(path), header=True, all_varchar=True, delimiter=delimiter
             ).to_arrow_table()
         except duckdb.Error as error:
             raise InvalidRecordFile(f"The file cannot be read as CSV: {error}") from error
-        finally:
-            reader.close()
+    cursor.register("file", table)
+    return cursor.table("file"), delimiter
 
+
+def _with_record_file(
+    ocel: OCEL, content: bytes, mapping: ColumnMapping
+) -> duckdb.DuckDBPyConnection:
+    """A cursor on the log's database that also sees the file as `record_file`:
+    one text column per role, empty where the file has no column for it, and
+    each row's line number in the file."""
     cursor = ocel.con.cursor()
-    cursor.execute("SET TimeZone = 'UTC'")
-    cursor.register("record_file", table)
+    try:
+        file, _ = _read(cursor, content)
+        assigned = {role: getattr(mapping, role) for role in ROLES}
+        unknown = [name for name in assigned.values() if name and name not in file.columns]
+        if unknown:
+            raise InvalidRecordFile(f"The file has no column {', '.join(unknown)}.")
+        selected = ", ".join(
+            f"{_quoted(name)} AS {role}" if name else f"NULL::VARCHAR AS {role}"
+            for role, name in assigned.items()
+        )
+        cursor.execute("SET TimeZone = 'UTC'")
+        cursor.execute(
+            f"CREATE TEMP TABLE record_file AS "
+            f"SELECT row_number() OVER () + 1 AS line, {selected} FROM file"
+        )
+    except BaseException:
+        cursor.close()
+        raise
     return cursor
 
 

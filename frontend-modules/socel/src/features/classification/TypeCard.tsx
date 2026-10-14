@@ -1,9 +1,8 @@
 import type { LucideIcon } from "lucide-react";
-import { Box, Flex, Progress, Section, Text, useColorOf } from "../../components";
+import { Box, ClassSelect, Flex, Progress, Section, Text, useColorOf } from "../../components";
+import type { TypeClassification } from "../../hooks/useLogClassification";
+import { type ClassOption, classifiedShare } from "../../lib/classOptions";
 import { formatCount } from "../../lib/format";
-import ClassSelect from "./ClassSelect";
-import { type ClassOption, classifiedShare } from "./classOptions";
-import type { TypeClassification } from "./useLogClassification";
 
 interface TypeCardProps {
   icon: LucideIcon;

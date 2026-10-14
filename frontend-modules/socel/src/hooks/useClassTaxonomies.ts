@@ -1,4 +1,4 @@
-import { type ClassNodeModel, useGetClassTaxonomies } from "../../api/socel";
+import { type ClassNodeModel, useGetClassTaxonomies } from "../api/socel";
 
 export type ClassNode = ClassNodeModel;
 

@@ -1,5 +1,5 @@
-import { type TypeClassificationModel, useGetLogClassification } from "../../api/socel";
-import { useSelectedOcel } from "../../hooks/useSelectedOcel";
+import { type TypeClassificationModel, useGetLogClassification } from "../api/socel";
+import { useSelectedOcel } from "./useSelectedOcel";
 
 export type TypeClassification = TypeClassificationModel;
 

@@ -13,6 +13,7 @@ export {
   Badge,
   Box,
   Button,
+  Checkbox,
   Code,
   Flex,
   Grid,
@@ -24,6 +25,8 @@ export {
   Tooltip,
 } from "@r4pm/components/ui";
 export { type BarNode, default as BarTree } from "./BarTree";
+export { default as ClassSelect } from "./ClassSelect";
+export { default as Dialog, SmallChoice } from "./Dialog";
 export { default as Page } from "./Page";
 export { default as Section } from "./Section";
 export { default as StatCards, type StatItem } from "./StatCards";
