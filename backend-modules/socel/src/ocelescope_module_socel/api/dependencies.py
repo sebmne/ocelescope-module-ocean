@@ -12,6 +12,7 @@ from ocelescope_module_socel.application.ports.attribute_flow_importer import (
     AttributeFlowImporter,
 )
 from ocelescope_module_socel.application.ports.containment_writer import ContainmentWriter
+from ocelescope_module_socel.application.ports.flow_editor import FlowEditor
 from ocelescope_module_socel.application.ports.log_classifier import LogClassifier
 from ocelescope_module_socel.application.ports.log_store import LogStore
 from ocelescope_module_socel.application.ports.record_importer import RecordImporter
@@ -19,6 +20,7 @@ from ocelescope_module_socel.application.ports.socel_statistics import SocelStat
 from ocelescope_module_socel.application.ports.upload_store import UploadStore
 from ocelescope_module_socel.application.use_cases.build_socel import BuildSocel
 from ocelescope_module_socel.application.use_cases.calculate_impact import CalculateImpact
+from ocelescope_module_socel.application.use_cases.configure_socel import ConfigureSocel
 from ocelescope_module_socel.application.use_cases.get_class_counts import GetClassCounts
 from ocelescope_module_socel.application.use_cases.get_class_taxonomies import (
     GetClassTaxonomies,
@@ -32,6 +34,7 @@ from ocelescope_module_socel.application.use_cases.get_log_classification import
 )
 from ocelescope_module_socel.application.use_cases.get_socel_status import GetSocelStatus
 from ocelescope_module_socel.application.use_cases.preview_record_file import PreviewRecordFile
+from ocelescope_module_socel.application.use_cases.socel_changes import ApplySocelChanges
 from ocelescope_module_socel.application.use_cases.upload_record_file import UploadRecordFile
 from ocelescope_module_socel.infrastructure.duckdb_attribute_flow_importer import (
     DuckDbAttributeFlowImporter,
@@ -39,6 +42,7 @@ from ocelescope_module_socel.infrastructure.duckdb_attribute_flow_importer impor
 from ocelescope_module_socel.infrastructure.duckdb_containment_writer import (
     DuckDbContainmentWriter,
 )
+from ocelescope_module_socel.infrastructure.duckdb_flow_editor import DuckDbFlowEditor
 from ocelescope_module_socel.infrastructure.duckdb_log_classifier import DuckDbLogClassifier
 from ocelescope_module_socel.infrastructure.duckdb_record_importer import DuckDbRecordImporter
 from ocelescope_module_socel.infrastructure.duckdb_socel_statistics import DuckDbSocelStatistics
@@ -138,6 +142,10 @@ def get_containment_writer() -> ContainmentWriter:
     return DuckDbContainmentWriter()
 
 
+def get_flow_editor() -> FlowEditor:
+    return DuckDbFlowEditor()
+
+
 def get_upload_store(session: ApiSession) -> UploadStore:
     return SessionUploadStore(session)
 
@@ -166,19 +174,33 @@ def get_preview_record_file(
     return PreviewRecordFile(importer=importer, uploads=uploads)
 
 
-def get_build_socel(
+def get_apply_socel_changes(
     classifier: Annotated[LogClassifier, Depends(get_log_classifier)],
     importer: Annotated[RecordImporter, Depends(get_record_importer)],
     attributes: Annotated[AttributeFlowImporter, Depends(get_attribute_flow_importer)],
     containment: Annotated[ContainmentWriter, Depends(get_containment_writer)],
+    editor: Annotated[FlowEditor, Depends(get_flow_editor)],
     uploads: Annotated[UploadStore, Depends(get_upload_store)],
-    store: Annotated[LogStore, Depends(get_log_store)],
-) -> BuildSocel:
-    return BuildSocel(
+) -> ApplySocelChanges:
+    return ApplySocelChanges(
         classifier=classifier,
         importer=importer,
         attributes=attributes,
         containment=containment,
+        editor=editor,
         uploads=uploads,
-        store=store,
     )
+
+
+def get_configure_socel(
+    apply: Annotated[ApplySocelChanges, Depends(get_apply_socel_changes)],
+    store: Annotated[LogStore, Depends(get_log_store)],
+) -> ConfigureSocel:
+    return ConfigureSocel(apply=apply, store=store)
+
+
+def get_build_socel(
+    apply: Annotated[ApplySocelChanges, Depends(get_apply_socel_changes)],
+    store: Annotated[LogStore, Depends(get_log_store)],
+) -> BuildSocel:
+    return BuildSocel(apply=apply, store=store)

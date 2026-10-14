@@ -73,11 +73,11 @@ export function newFlows(
   return [...flows.values()];
 }
 
-/** The definitions as the build needs them; null while a flow lacks its unit
- * or category. */
-export function definitions(flows: readonly NewFlow[], drafts: FlowDrafts) {
+/** The definitions of the given flows as the build needs them; null while a
+ * flow lacks its unit or category. */
+export function definitions(flowIds: readonly string[], drafts: FlowDrafts) {
   const defined: Record<string, FlowDefinitionModel> = {};
-  for (const { flowId } of flows) {
+  for (const flowId of flowIds) {
     const draft = drafts[flowId] ?? EMPTY_DRAFT;
     const unit = draft.unit.trim();
     const category = draft.category;

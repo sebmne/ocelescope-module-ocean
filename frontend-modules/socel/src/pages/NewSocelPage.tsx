@@ -1,32 +1,12 @@
-import { ArrowLeftIcon, ArrowRightIcon, SparklesIcon, TagsIcon } from "lucide-react";
+import { ArrowLeftIcon, ArrowRightIcon, SparklesIcon } from "lucide-react";
 import { useRouter } from "next/router";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Button, Flex, Page, Section, Text, TextField } from "../components";
+import AddFlows from "../features/addFlows/AddFlows";
+import { useAddFlows } from "../features/addFlows/useAddFlows";
 import Classification from "../features/classification/Classification";
-import AttributeFlows from "../features/newSocel/AttributeFlows";
-import ContainmentCard from "../features/newSocel/ContainmentCard";
-import {
-  type ContainmentDraft,
-  problemOf,
-  typeContainments,
-} from "../features/newSocel/containment";
-import FileFlows from "../features/newSocel/FileFlows";
-import FlowSources, { AddFile } from "../features/newSocel/FlowSources";
-import FlowTable from "../features/newSocel/FlowTable";
-import {
-  type AttributeChoices,
-  attributeFlows,
-  definitions,
-  type FlowDrafts,
-  newFlows,
-} from "../features/newSocel/flowDrafts";
-import { useEventAttributes } from "../features/newSocel/useEventAttributes";
-import { canBeRead, useRecordFile } from "../features/newSocel/useRecordFile";
-import { useTypeRelations } from "../features/newSocel/useTypeRelations";
 import { type Changes, useBuildSocel } from "../hooks/useBuildSocel";
-import { useClassTaxonomies } from "../hooks/useClassTaxonomies";
 import { useSelectedOcel } from "../hooks/useSelectedOcel";
-import { classOptions } from "../lib/classOptions";
 import { formatCount } from "../lib/format";
 
 const STEPS = ["Classes", "Flows", "Create"] as const;
@@ -38,52 +18,17 @@ export default function NewSocelPage() {
   const router = useRouter();
   const { name: logName } = useSelectedOcel();
   const { build, isBuilding, error } = useBuildSocel();
-  const taxonomies = useClassTaxonomies();
-  const records = useRecordFile();
-  const attributes = useEventAttributes();
+  const added = useAddFlows();
 
   const [step, setStep] = useState(0);
   const [activities, setActivities] = useState<Changes>({});
   const [objectTypes, setObjectTypes] = useState<Changes>({});
-  const [choices, setChoices] = useState<AttributeChoices>({});
-  // Whether attributes are a source of flows, and whether the file's popup
-  // opens as its card first shows.
-  const [attributesOn, setAttributesOn] = useState(false);
-  const [openFile, setOpenFile] = useState(false);
-  const [containments, setContainments] = useState<ContainmentDraft[]>([]);
-  const { relations } = useTypeRelations();
-  const [drafts, setDrafts] = useState<FlowDrafts>({});
   const [name, setName] = useState<string>();
   const builtName = name ?? (logName ? `${logName} (sOCEL)` : "");
-
-  const categories = useMemo(
-    () => classOptions(taxonomies.data?.flowCategories ?? []),
-    [taxonomies.data],
-  );
-  const flows = newFlows(records.preview, attributes.data ?? [], choices);
-  const defined = definitions(flows, drafts);
-  const flowIds = flows.map((flow) => flow.flowId);
-  // A containment that is filled in but cannot be used keeps the sOCEL from being created.
-  const badContainments = containments.filter((containment) => {
-    const problem = problemOf(containment, relations, containments);
-    return problem !== null && problem !== "Not filled in";
-  }).length;
-  // A file whose columns are not all told is not taken along silently.
-  const fileUnread = !!records.file && !canBeRead(records.mapping);
+  const { undefinedFlows, badContainments, fileUnread } = added.problems;
 
   const create = () =>
-    build({
-      name: builtName,
-      activities,
-      objectTypes,
-      flows: defined ?? {},
-      records:
-        records.file && records.preview
-          ? { uploadId: records.file.uploadId, mapping: records.mapping }
-          : null,
-      attributeFlows: attributeFlows(choices),
-      containment: typeContainments(containments, flowIds),
-    })
+    build({ name: builtName, activities, objectTypes, ...added.changes })
       .then(() => router.push("/ocean/overview"))
       .catch(() => undefined);
 
@@ -114,81 +59,7 @@ export default function NewSocelPage() {
         />
       )}
 
-      {step === 1 &&
-        (!records.file && !attributesOn ? (
-          <FlowSources
-            isUploading={records.isUploading}
-            error={records.error}
-            onFile={(file) => {
-              records.upload(file);
-              setOpenFile(true);
-            }}
-            onAttributes={() => setAttributesOn(true)}
-          />
-        ) : (
-          <Flex direction="column" gap="4">
-            {records.file && (
-              <FileFlows
-                file={records.file}
-                name={records.name}
-                mapping={records.mapping}
-                preview={records.preview}
-                isReading={records.isReading}
-                error={records.error}
-                initiallyOpen={openFile}
-                onAssign={records.assign}
-                onRemove={() => {
-                  records.remove();
-                  setOpenFile(false);
-                }}
-              />
-            )}
-            {attributesOn && (
-              <AttributeFlows
-                choices={choices}
-                onChange={setChoices}
-                onClose={() => {
-                  setAttributesOn(false);
-                  setChoices({});
-                }}
-              />
-            )}
-            {(!records.file || !attributesOn) && (
-              <Flex gap="2">
-                {!records.file && (
-                  <AddFile
-                    isUploading={records.isUploading}
-                    onFile={(file) => {
-                      records.upload(file);
-                      setOpenFile(true);
-                    }}
-                  />
-                )}
-                {!attributesOn && (
-                  <Button variant="soft" color="gray" onClick={() => setAttributesOn(true)}>
-                    <TagsIcon size={15} />
-                    Add event attributes
-                  </Button>
-                )}
-              </Flex>
-            )}
-            <FlowTable
-              flows={flows}
-              drafts={drafts}
-              categories={categories}
-              onDefine={(flowId, draft) =>
-                setDrafts((current) => ({ ...current, [flowId]: draft }))
-              }
-            />
-            {flows.length > 0 && (
-              <ContainmentCard
-                flows={flowIds}
-                containments={containments}
-                onChange={setContainments}
-              />
-            )}
-          </Flex>
-        ))}
+      {step === 1 && <AddFlows state={added} />}
 
       {step === 2 && (
         <Section icon={SparklesIcon} title="Create">
@@ -196,9 +67,9 @@ export default function NewSocelPage() {
             <Text size="2">
               {formatCount(Object.keys(activities).length)} activities and{" "}
               {formatCount(Object.keys(objectTypes).length)} object types get a class here;{" "}
-              {formatCount(flows.length)} flows are added.
+              {formatCount(added.flows.length)} flows are added.
             </Text>
-            {defined === null && (
+            {undefinedFlows && (
               <Text size="2" color="amber">
                 Every flow needs a unit and a category: see step 2.
               </Text>
@@ -229,7 +100,7 @@ export default function NewSocelPage() {
                 onClick={create}
                 loading={isBuilding}
                 disabled={
-                  builtName.trim() === "" || defined === null || fileUnread || badContainments > 0
+                  builtName.trim() === "" || undefinedFlows || fileUnread || badContainments > 0
                 }
               >
                 <SparklesIcon size={16} />

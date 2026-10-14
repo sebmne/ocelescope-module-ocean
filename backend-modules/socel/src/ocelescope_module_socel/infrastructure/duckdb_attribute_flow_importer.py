@@ -39,20 +39,13 @@ class DuckDbAttributeFlowImporter:
                 raise UnknownAttribute(flow.attribute)
         for flow in flows:
             definition = definitions[flow.flow_id]
-            # A flow a file already brought keeps the definition written with it.
+            # The definition given replaces the log's flow of that name, as a
+            # file's flows do; a file of the same build wrote the same one.
+            con.execute(f"DELETE FROM {FLOW.name} WHERE flow_id = ?", [flow.flow_id])
             con.execute(
-                f"""
-                INSERT INTO {FLOW.name} (flow_id, unit, category, external_ref)
-                SELECT ?, ?, ?, ?
-                WHERE NOT EXISTS (SELECT 1 FROM {FLOW.name} WHERE flow_id = ?)
-                """,
-                [
-                    flow.flow_id,
-                    definition.unit,
-                    definition.category,
-                    definition.external_ref,
-                    flow.flow_id,
-                ],
+                f"INSERT INTO {FLOW.name} (flow_id, unit, category, external_ref) "
+                "VALUES (?, ?, ?, ?)",
+                [flow.flow_id, definition.unit, definition.category, definition.external_ref],
             )
             # One record per object of the type at the event; several objects
             # share the event's value equally.

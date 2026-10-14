@@ -1,48 +1,40 @@
 import { SaveIcon } from "lucide-react";
-import { useRouter } from "next/router";
 import { useState } from "react";
-import { Button, Flex, Page, Text, TextField } from "../components";
+import { Button, Page, Text } from "../components";
 import Classification from "../features/classification/Classification";
-import { type Changes, useBuildSocel } from "../hooks/useBuildSocel";
-import { useSelectedOcel } from "../hooks/useSelectedOcel";
+import FlowConfig from "../features/flowConfig/FlowConfig";
+import { useFlowEdits } from "../features/flowConfig/useFlowEdits";
+import type { Changes } from "../hooks/useBuildSocel";
+import { useConfigureSocel } from "../hooks/useConfigureSocel";
 
-// Changes the selected sOCEL: the classes of its activities and object types.
-// The changed log is kept as a new one, beside the one it came from.
+// Changes the selected sOCEL in place: the classes of its activities and object
+// types, and its flows. The log keeps its id and name, so it is exported as
+// changed.
 export default function ConfigPage() {
-  const router = useRouter();
-  const { name: logName } = useSelectedOcel();
-  const { build, isBuilding, error } = useBuildSocel();
+  const { configure, isSaving, error } = useConfigureSocel();
+  const flows = useFlowEdits();
   const [activities, setActivities] = useState<Changes>({});
   const [objectTypes, setObjectTypes] = useState<Changes>({});
-  const [name, setName] = useState<string>();
-  const savedName = name ?? (logName ? `${logName} (changed)` : "");
-  const changed = Object.keys(activities).length + Object.keys(objectTypes).length > 0;
+  const changed =
+    Object.keys(activities).length + Object.keys(objectTypes).length + flows.edits.length > 0;
 
   const save = () =>
-    build({ name: savedName, activities, objectTypes })
-      .then(() => router.push("/ocean/overview"))
+    configure({ activities, objectTypes, flowEdits: flows.edits })
+      .then(() => {
+        setActivities({});
+        setObjectTypes({});
+        flows.reset();
+      })
       .catch(() => undefined);
 
   return (
     <Page
       title="sOCEL config"
       actions={
-        <Flex align="center" gap="2">
-          <TextField.Root
-            aria-label="Name of the changed log"
-            value={savedName}
-            onChange={(event) => setName(event.target.value)}
-            style={{ width: 260 }}
-          />
-          <Button
-            onClick={save}
-            loading={isBuilding}
-            disabled={!changed || savedName.trim() === ""}
-          >
-            <SaveIcon size={16} />
-            Save as new log
-          </Button>
-        </Flex>
+        <Button onClick={save} loading={isSaving} disabled={!changed || flows.hasProblems}>
+          <SaveIcon size={16} />
+          Save
+        </Button>
       }
     >
       {error && (
@@ -56,6 +48,7 @@ export default function ConfigPage() {
         onActivities={setActivities}
         onObjectTypes={setObjectTypes}
       />
+      <FlowConfig state={flows} />
     </Page>
   );
 }

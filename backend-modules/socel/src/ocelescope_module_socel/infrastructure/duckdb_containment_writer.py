@@ -48,10 +48,15 @@ class DuckDbContainmentWriter:
                             containment.parent_type,
                         ],
                     )
+            # Together with what the log holds already: an object lies inside
+            # one object per flow at most.
             several = con.execute(
-                """
+                f"""
                 SELECT flow_id, count(*), min(object_id) FROM (
-                    SELECT flow_id, object_id FROM new_containment
+                    SELECT flow_id, object_id FROM (
+                        SELECT flow_id, object_id, parent_object_id FROM new_containment
+                        UNION SELECT flow_id, object_id, parent_object_id FROM {CONTAINED_IN.name}
+                    )
                     GROUP BY 1, 2 HAVING count(DISTINCT parent_object_id) > 1
                 ) GROUP BY 1 ORDER BY 1 LIMIT 1
                 """
@@ -62,6 +67,7 @@ class DuckDbContainmentWriter:
                 f"""
                 INSERT INTO {CONTAINED_IN.name} (flow_id, object_id, parent_object_id)
                 SELECT DISTINCT flow_id, object_id, parent_object_id FROM new_containment
+                EXCEPT SELECT flow_id, object_id, parent_object_id FROM {CONTAINED_IN.name}
                 """
             )
         finally:

@@ -46,3 +46,17 @@ class SeveralParents(SocelBuildError):
 class UnknownCategory(SocelBuildError):
     def __init__(self, category: str) -> None:
         super().__init__(f"{category!r} is no flow category of the taxonomy.")
+
+
+class UnknownFlow(SocelBuildError):
+    def __init__(self, flow_id: str) -> None:
+        super().__init__(f"The log has no flow {flow_id!r}.")
+
+
+class FlowNameTaken(SocelBuildError):
+    def __init__(self, name: str) -> None:
+        super().__init__(f"Two flows would be called {name!r}; flow names are unique.")
+
+
+class InvalidFlowEdit(SocelBuildError):
+    """A flow cannot be changed as asked. The message says why."""

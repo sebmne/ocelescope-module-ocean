@@ -4,7 +4,11 @@ from fastapi import APIRouter, Depends
 from ocelescope_backend.app.dependencies import ApiOcel
 from pydantic import Field
 
-from ocelescope_module_socel.api.dependencies import get_build_socel, get_log_classification
+from ocelescope_module_socel.api.dependencies import (
+    get_build_socel,
+    get_configure_socel,
+    get_log_classification,
+)
 from ocelescope_module_socel.api.routes.flow_records import (
     ColumnMappingModel,
     FlowDefinitionModel,
@@ -13,14 +17,22 @@ from ocelescope_module_socel.api.schema import ApiModel
 from ocelescope_module_socel.application.use_cases.build_socel import (
     BuildSocel,
     BuildSocelCommand,
-    RecordsToImport,
+)
+from ocelescope_module_socel.application.use_cases.configure_socel import (
+    ConfigureSocel,
+    ConfigureSocelCommand,
 )
 from ocelescope_module_socel.application.use_cases.get_log_classification import (
     GetLogClassification,
     GetLogClassificationCommand,
 )
+from ocelescope_module_socel.application.use_cases.socel_changes import (
+    RecordsToImport,
+    SocelChanges,
+)
 from ocelescope_module_socel.domain.models.attribute_flows import AttributeFlow, Direction
 from ocelescope_module_socel.domain.models.containment import TypeContainment
+from ocelescope_module_socel.domain.models.flow_edit import FlowEdit
 from ocelescope_module_socel.domain.models.log_classification import (
     LogClassification,
     TypeClassification,
@@ -100,17 +112,56 @@ class TypeContainmentModel(ApiModel):
         )
 
 
-class BuildSocelRequest(ApiModel):
+class FlowEditModel(ApiModel):
+    # The flow as it is now, and as it is to be.
+    flow_id: str
     name: str
+    unit: str
+    category: str | None
+    external_ref: str | None = None
+    # Multiplies every record's quantity, for a new unit; null keeps them.
+    conversion: float | None = None
+    delete: bool = False
+
+    def to_domain(self) -> FlowEdit:
+        return FlowEdit(
+            flow_id=self.flow_id,
+            name=self.name.strip(),
+            unit=self.unit.strip(),
+            category=self.category,
+            external_ref=(self.external_ref or "").strip() or None,
+            conversion=self.conversion,
+            delete=self.delete,
+        )
+
+
+class SocelChangesModel(ApiModel):
     # Class per activity and per object type; null takes a class away. Types not
     # named keep what they have.
-    activities: dict[str, str | None]
-    object_types: dict[str, str | None]
-    # Unit, category and reference of every flow the build brings.
+    activities: dict[str, str | None] = Field(default_factory=dict)
+    object_types: dict[str, str | None] = Field(default_factory=dict)
+    # Unit, category and reference of every flow the changes bring or use; a
+    # definition replaces the log's flow of that id.
     flows: dict[str, FlowDefinitionModel] = Field(default_factory=dict)
     records: RecordsToImportModel | None = None
     attribute_flows: list[AttributeFlowModel] = Field(default_factory=list)
     containment: list[TypeContainmentModel] = Field(default_factory=list)
+    flow_edits: list[FlowEditModel] = Field(default_factory=list)
+
+    def to_domain(self) -> SocelChanges:
+        return SocelChanges(
+            activities=self.activities,
+            object_types=self.object_types,
+            flows={flow_id: flow.to_domain() for flow_id, flow in self.flows.items()},
+            records=self.records.to_domain() if self.records else None,
+            attribute_flows=tuple(flow.to_domain() for flow in self.attribute_flows),
+            containment=tuple(item.to_domain() for item in self.containment),
+            flow_edits=tuple(edit.to_domain() for edit in self.flow_edits),
+        )
+
+
+class BuildSocelRequest(SocelChangesModel):
+    name: str
 
 
 class BuiltSocelModel(ApiModel):
@@ -129,6 +180,24 @@ def get_classification(
     return response
 
 
+@router.put(
+    "/{ocel_id}/socel",
+    operation_id="configureSocel",
+    status_code=204,
+    responses={422: {"description": "The log cannot be changed as asked."}},
+)
+def configure_socel(
+    ocel_id: str,
+    request: SocelChangesModel,
+    use_case: Annotated[ConfigureSocel, Depends(get_configure_socel)],
+) -> None:
+    """Changes the log in place: classifies its events and objects per activity
+    and object type, and adds flow records of an uploaded file and of event
+    attributes, and containment. The whole log is changed, not only what the
+    app's filters show, and it keeps its id and name."""
+    use_case.execute(ConfigureSocelCommand(ocel_id=ocel_id, changes=request.to_domain()))
+
+
 @router.post(
     "/{ocel_id}/socel",
     operation_id="buildSocel",
@@ -143,16 +212,7 @@ def build_socel(
     activity and object type, with the flow records of an uploaded file and of
     event attributes."""
     ocel_id = use_case.execute(
-        BuildSocelCommand(
-            ocel=ocel,
-            name=request.name,
-            activities=request.activities,
-            object_types=request.object_types,
-            flows={flow_id: flow.to_domain() for flow_id, flow in request.flows.items()},
-            records=request.records.to_domain() if request.records else None,
-            attribute_flows=tuple(flow.to_domain() for flow in request.attribute_flows),
-            containment=tuple(item.to_domain() for item in request.containment),
-        )
+        BuildSocelCommand(ocel=ocel, name=request.name, changes=request.to_domain())
     )
     response = BuiltSocelModel(ocel_id=ocel_id)
     return response
