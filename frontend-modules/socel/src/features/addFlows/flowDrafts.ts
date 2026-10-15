@@ -1,7 +1,7 @@
 import type {
-  AttributeFlowModel,
-  FlowDefinitionModel,
-  RecordFilePreviewModel,
+  AttributeFlow,
+  FlowDefinition,
+  RecordFilePreview,
 } from "../../api/socel";
 import type { EventAttribute } from "./useEventAttributes";
 
@@ -38,7 +38,7 @@ export interface NewFlow {
 /** The flows the build would bring: those of the file that have usable rows,
  * and those of the chosen attributes. */
 export function newFlows(
-  preview: RecordFilePreviewModel | null | undefined,
+  preview: RecordFilePreview | null | undefined,
   attributes: readonly EventAttribute[],
   choices: AttributeChoices,
 ): NewFlow[] {
@@ -76,7 +76,7 @@ export function newFlows(
 /** The definitions of the given flows as the build needs them; null while a
  * flow lacks its unit or category. */
 export function definitions(flowIds: readonly string[], drafts: FlowDrafts) {
-  const defined: Record<string, FlowDefinitionModel> = {};
+  const defined: Record<string, FlowDefinition> = {};
   for (const flowId of flowIds) {
     const draft = drafts[flowId] ?? EMPTY_DRAFT;
     const unit = draft.unit.trim();
@@ -92,7 +92,7 @@ export function definitions(flowIds: readonly string[], drafts: FlowDrafts) {
 }
 
 /** The chosen attributes as the build needs them. */
-export function attributeFlows(choices: AttributeChoices): AttributeFlowModel[] {
+export function attributeFlows(choices: AttributeChoices): AttributeFlow[] {
   return Object.entries(choices)
     .filter(([, choice]) => choice.flowId.trim() !== "")
     .map(([attribute, choice]) => ({

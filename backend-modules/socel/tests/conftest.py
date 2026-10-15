@@ -42,7 +42,7 @@ def plain_log(session: Session) -> str:
 def build(api: Api, ocel_id: str, *, containment: bool = True, **changes: Any) -> str:
     """Builds an sOCEL from the log with the example records; returns its id."""
     upload = api.upload_record_file(ocel_id, RECORDS_CSV)
-    assert upload.status_code == 200, upload.text
+    assert upload.status_code == 201, upload.text
     body = {
         "name": "plant sOCEL",
         **CLASSES,
@@ -52,8 +52,10 @@ def build(api: Api, ocel_id: str, *, containment: bool = True, **changes: Any) -
         **changes,
     }
     built = api.build_socel(ocel_id, body)
-    assert built.status_code == 200, built.text
-    return built.json()["ocelId"]
+    assert built.status_code == 201, built.text
+    result = built.json()["ocelId"]
+    assert built.headers["location"].endswith(f"/logs/{result}/summary")
+    return result
 
 
 @pytest.fixture

@@ -21,7 +21,7 @@ const toBar = (node: TaxonomyNode): BarNode => ({
     node.own > 0 && node.children.length > 0
       ? `${formatCount(node.own)} directly, ${formatCount(node.total - node.own)} below`
       : undefined,
-  tone: node.path === null ? "muted" : node.isCore ? "accent" : "neutral",
+  tone: node.path === null ? "muted" : "neutral",
   children: node.children.map(toBar),
 });
 
@@ -54,8 +54,7 @@ const toRings = (counts: readonly ClassCount[]) => {
 };
 
 // Objects and events per socel_class, as the taxonomy tree the classes span:
-// a sunburst for the distribution, and bars for the numbers, in which handling
-// units and operations stand out.
+// a sunburst for the distribution, and bars for the numbers.
 export default function ClassesSection() {
   const counts = useClassCounts();
 

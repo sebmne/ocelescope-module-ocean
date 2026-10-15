@@ -1,12 +1,14 @@
-from dataclasses import dataclass
-from typing import dataclass_transform
+from pydantic import BaseModel, ConfigDict
+from pydantic.alias_generators import to_camel
 
 
-@dataclass_transform(frozen_default=True, kw_only_default=True)
-class Model:
-    """Base of all domain models: plain data as one immutable, keyword-only
-    dataclass. A subclass only lists its fields."""
+class Model(BaseModel):
+    """Validated domain values, also used directly at the HTTP boundary."""
 
-    def __init_subclass__(cls, **kwargs: object) -> None:
-        super().__init_subclass__(**kwargs)
-        dataclass(frozen=True, kw_only=True)(cls)
+    model_config = ConfigDict(
+        frozen=True,
+        alias_generator=to_camel,
+        validate_by_name=True,
+        validate_by_alias=True,
+        serialize_by_alias=True,
+    )

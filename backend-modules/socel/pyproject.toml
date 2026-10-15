@@ -6,7 +6,6 @@ requires-python = ">=3.13"
 dependencies = [
   "ocelescope-backend>=0.10.1,<0.11.0",
   "pydantic>=2.11",
-  "socel",
 ]
 
 [project.entry-points."ocelescope_backend.modules"]
@@ -30,16 +29,13 @@ select = ["E", "F", "I", "UP", "B"]
 [tool.pyright]
 include = ["src", "tests"]
 # The tests import their helpers (api.py, example_log.py) by module name, as pytest runs them.
-extraPaths = ["tests"]
+extraPaths = ["src", "tests"]
 typeCheckingMode = "standard"
 
 # The architecture, enforced: `pnpm run check:backend` (repository root) runs these contracts.
 # One hexagon for the whole module - pages are the frontend's concern - with
 # dependencies pointing inwards: module -> api -> infrastructure -> application -> domain.
-# There is no infrastructure yet (no use case needs anything from outside), so the
-# layer is optional - the parentheses. With the first adapter, add a contract that
-# keeps api/routes from importing infrastructure: routes get use cases, with their
-# adapters, from api/dependencies.py only.
+# Routes obtain assembled use cases from api/dependencies.py.
 [tool.importlinter]
 root_package = "ocelescope_module_socel"
 include_external_packages = true
@@ -56,17 +52,29 @@ layers = [
 ]
 
 [[tool.importlinter.contracts]]
-name = "Application and domain know no web framework, server or pydantic (plain dataclasses)"
-type = "forbidden"
-source_modules = ["ocelescope_module_socel.application", "ocelescope_module_socel.domain"]
-forbidden_modules = ["fastapi", "ocelescope_backend", "pydantic"]
-
-[[tool.importlinter.contracts]]
 name = "Routes reach adapters only through the composition root (api/dependencies.py)"
 type = "forbidden"
 source_modules = ["ocelescope_module_socel.api.routes", "ocelescope_module_socel.api.router"]
 forbidden_modules = ["ocelescope_module_socel.infrastructure"]
 allow_indirect_imports = true
 
+[[tool.importlinter.contracts]]
+name = "Application and domain know no database, host, web framework or legacy library"
+type = "forbidden"
+source_modules = ["ocelescope_module_socel.application", "ocelescope_module_socel.domain"]
+forbidden_modules = ["fastapi", "ocelescope", "ocelescope_backend", "duckdb", "socel"]
+
+[[tool.importlinter.contracts]]
+name = "Domain has no dependency on application, including its ports"
+type = "forbidden"
+source_modules = ["ocelescope_module_socel.domain"]
+forbidden_modules = ["ocelescope_module_socel.application"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[[tool.importlinter.contracts]]
+name = "Backend has no dependency on the standalone sOCEL library"
+type = "forbidden"
+source_modules = ["ocelescope_module_socel"]
+forbidden_modules = ["socel"]

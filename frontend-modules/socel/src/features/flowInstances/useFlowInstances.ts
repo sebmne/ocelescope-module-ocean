@@ -1,8 +1,8 @@
 import { keepPreviousData } from "@tanstack/react-query";
-import { type FlowInstanceModel, useGetFlowInstances } from "../../api/socel";
+import { type FlowInstanceRow, useGetFlowInstances } from "../../api/socel";
 import { useSelectedOcel } from "../../hooks/useSelectedOcel";
 
-export type FlowInstance = FlowInstanceModel;
+export type FlowInstance = FlowInstanceRow;
 export type InstanceOrder = "quantity" | "object";
 
 export const PAGE_SIZE = 25;

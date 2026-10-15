@@ -1,42 +1,34 @@
-/** A socel_class with how many objects or events carry it (null: unclassified). */
-export interface CountedClass {
-  socelClass: string | null;
-  count: number;
-  /** Makes handling units (objects) or operations (events). */
-  isCore: boolean;
-}
+import type { ClassCount } from "../../api/socel";
 
 export interface TaxonomyNode {
-  /** The class path up to this node, e.g. "op.manufacturing"; null for unclassified. */
+  /** The class path up to this node, e.g. "root.branch"; null for unclassified. */
   path: string | null;
-  /** The last segment of the path, e.g. "manufacturing". */
+  /** The last segment of the path, e.g. "branch". */
   label: string;
   /** Entities carrying exactly this class. */
   own: number;
   /** Entities carrying this class or one below it. */
   total: number;
-  isCore: boolean;
   children: TaxonomyNode[];
 }
 
 /**
- * The classes as a taxonomy tree, by their dot-separated segments (Chapter 4):
- * "op.manufacturing.forming" lies below "op.manufacturing", below "op". Classes
- * are free text, so the tree is the one the data spans. Siblings are ordered by
+ * The classes as a taxonomy tree, by their dot-separated segments:
+ * "root.branch.leaf" lies below "root.branch", below "root". The tree is
+ * reconstructed from the paths assigned in the log. Siblings are ordered by
  * total, largest first; unclassified entities come last, as a root of their own.
  */
-export function taxonomyTree(classes: readonly CountedClass[]): TaxonomyNode[] {
+export function taxonomyTree(classes: readonly ClassCount[]): TaxonomyNode[] {
   const roots: TaxonomyNode[] = [];
   let unclassified: TaxonomyNode | undefined;
 
-  for (const { socelClass, count, isCore } of classes) {
+  for (const { socelClass, count } of classes) {
     if (socelClass === null) {
       unclassified = {
         path: null,
         label: "unclassified",
         own: count,
         total: count,
-        isCore: false,
         children: [],
       };
       continue;
@@ -47,11 +39,10 @@ export function taxonomyTree(classes: readonly CountedClass[]): TaxonomyNode[] {
       const path = segments.slice(0, index + 1).join(".");
       let node = level.find((candidate) => candidate.path === path);
       if (!node) {
-        node = { path, label: segment, own: 0, total: 0, isCore: false, children: [] };
+        node = { path, label: segment, own: 0, total: 0, children: [] };
         level.push(node);
       }
       node.total += count;
-      node.isCore ||= isCore;
       if (index === segments.length - 1) node.own += count;
       level = node.children;
     });

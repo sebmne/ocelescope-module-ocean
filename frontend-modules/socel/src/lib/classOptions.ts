@@ -1,8 +1,4 @@
-export interface ClassTree {
-  path: string;
-  label: string;
-  children: readonly ClassTree[];
-}
+import type { ClassNode } from "../api/socel";
 
 export interface ClassOption {
   path: string;
@@ -11,12 +7,19 @@ export interface ClassOption {
   depth: number;
 }
 
-/** A taxonomy's classes in reading order, each knowing its depth. */
-export function classOptions(trees: readonly ClassTree[], depth = 0): ClassOption[] {
-  return trees.flatMap((node) => [
-    { path: node.path, label: node.label, depth },
-    ...classOptions(node.children, depth + 1),
-  ]);
+/** Reconstruct class paths and depths while walking the taxonomy's local names. */
+export function classOptions(
+  trees: readonly ClassNode[],
+  depth = 0,
+  parentPath = "",
+): ClassOption[] {
+  return trees.flatMap((node) => {
+    const path = parentPath ? `${parentPath}.${node.label}` : node.label;
+    return [
+      { path, label: node.label, depth },
+      ...classOptions(node.children ?? [], depth + 1, path),
+    ];
+  });
 }
 
 /** The share of all events or objects whose type has a class, from 0 to 1. */

@@ -168,7 +168,7 @@ export default function FlowInstances({
 
         <AsyncBoundary
           status={instances}
-          isEmpty={(data) => data.rows.length === 0}
+          isEmpty={(data) => data.items.length === 0}
           loadingLabel="Reading the objects…"
           errorTitle="The objects could not be read"
           emptyState={{ title: "No objects", description: "Nothing matches these filters." }}
@@ -206,7 +206,7 @@ export default function FlowInstances({
                 </HeaderCell>
                 <HeaderCell end>Quantity</HeaderCell>
               </Grid>
-              {data.rows.map((row) => (
+              {data.items.map((row) => (
                 <InstanceRow
                   key={row.objectId}
                   row={row}

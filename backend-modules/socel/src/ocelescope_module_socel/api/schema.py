@@ -3,8 +3,7 @@ from pydantic.alias_generators import to_camel
 
 
 class ApiModel(BaseModel):
-    """Base of every request and response model: camelCase on the
-    wire, so the generated TypeScript types read like the rest of the frontend."""
+    """Base for HTTP functionality models, with the public camelCase policy."""
 
     model_config = ConfigDict(
         alias_generator=to_camel,

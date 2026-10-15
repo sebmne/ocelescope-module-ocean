@@ -88,15 +88,21 @@ def test_without_containment_every_record_counts(api: Api, plain_log: str) -> No
     assert report["total"] == 136.0
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=ValueError,
-    reason="Defect: the validation error echoes the input, and inf cannot be written as JSON, "
-    "so the request fails with an exception instead of a 422.",
-)
-def test_a_factor_must_be_a_finite_number(api: Api, socel: str) -> None:
+@pytest.mark.parametrize("value", [b"Infinity", b"-Infinity", b"NaN"])
+def test_a_factor_must_be_a_finite_number(api: Api, socel: str, value: bytes) -> None:
     response = api.calculate_impact_from_json(
-        socel, b'{"period": "day", "factors": {"heat": {"outflow": Infinity}}}'
+        socel, b'{"period": "day", "factors": {"heat": {"outflow": ' + value + b"}}}"
     )
 
     assert response.status_code == 422
+    assert response.json()["detail"][0]["loc"] == ["body", "factors", "heat", "outflow"]
+    assert response.json()["detail"][0]["type"] == "finite_number"
+
+
+def test_period_defaults_to_day(api: Api, socel: str) -> None:
+    response = api.calculate_impact_from_json(
+        socel, b'{"factors": {"electricity": {"inflow": 0.5}}}'
+    )
+
+    assert response.status_code == 200
+    assert response.json() == api.calculate_impact(socel, {"electricity": {"inflow": 0.5}}).json()

@@ -1,19 +1,17 @@
-from socel import SOCEL
+from dataclasses import dataclass
 
-from ocelescope_module_socel.application.command import Command
 from ocelescope_module_socel.application.ports.socel_statistics import SocelStatistics
 from ocelescope_module_socel.domain.models.socel_status import SocelStatus
 
 
-class GetSocelStatusCommand(Command):
-    socel: SOCEL
+@dataclass(frozen=True, kw_only=True)
+class GetSocelStatusCommand:
+    pass
 
 
 class GetSocelStatus:
-    """What the sOCEL holds, in counts, and the period its records span."""
-
     def __init__(self, *, statistics: SocelStatistics) -> None:
         self._statistics = statistics
 
     def execute(self, command: GetSocelStatusCommand) -> SocelStatus:
-        return self._statistics.status(command.socel)
+        return self._statistics.status()

@@ -1,4 +1,4 @@
-import type { DirectionFactorsModel } from "../../api/socel";
+import type { DirectionFactors } from "../../api/socel";
 import type { Factors } from "./useFactors";
 
 /** A typed factor as a number: null when none is given, NaN when it is no number. */
@@ -14,7 +14,7 @@ const usable = (text: string | undefined) => {
 
 /** The factors that are numbers, by flow and direction: what the impact is
  * calculated with. */
-export const usableFactors = (factors: Factors): Record<string, DirectionFactorsModel> =>
+export const usableFactors = (factors: Factors): Record<string, DirectionFactors> =>
   Object.fromEntries(
     Object.entries(factors).flatMap(([flowId, entry]) => {
       const inflow = usable(entry.inflow);

@@ -1,20 +1,14 @@
 """Composition root: the only place that knows which adapter implements which port."""
 
+from collections.abc import Generator, Iterator
 from threading import Lock
 from typing import Annotated
 
 from fastapi import Depends, HTTPException
-from ocelescope import OCELExtensionError
+from ocelescope import OCEL, OCELExtensionError
 from ocelescope_backend.app.dependencies import ApiOcel, ApiSession
-from socel import SOCEL
 
-from ocelescope_module_socel.application.ports.attribute_flow_importer import (
-    AttributeFlowImporter,
-)
-from ocelescope_module_socel.application.ports.containment_writer import ContainmentWriter
-from ocelescope_module_socel.application.ports.flow_editor import FlowEditor
 from ocelescope_module_socel.application.ports.log_classifier import LogClassifier
-from ocelescope_module_socel.application.ports.log_store import LogStore
 from ocelescope_module_socel.application.ports.record_importer import RecordImporter
 from ocelescope_module_socel.application.ports.socel_statistics import SocelStatistics
 from ocelescope_module_socel.application.ports.upload_store import UploadStore
@@ -34,20 +28,27 @@ from ocelescope_module_socel.application.use_cases.get_log_classification import
 )
 from ocelescope_module_socel.application.use_cases.get_socel_status import GetSocelStatus
 from ocelescope_module_socel.application.use_cases.preview_record_file import PreviewRecordFile
-from ocelescope_module_socel.application.use_cases.socel_changes import ApplySocelChanges
 from ocelescope_module_socel.application.use_cases.upload_record_file import UploadRecordFile
-from ocelescope_module_socel.infrastructure.duckdb_attribute_flow_importer import (
-    DuckDbAttributeFlowImporter,
+from ocelescope_module_socel.application.workflows.apply_socel_changes import ApplySocelChanges
+from ocelescope_module_socel.domain.services.impact_calculator import ImpactCalculator
+from ocelescope_module_socel.domain.services.preparation_validator import PreparationValidator
+from ocelescope_module_socel.infrastructure.adapters.duckdb_flow_analysis import DuckDbFlowAnalysis
+from ocelescope_module_socel.infrastructure.adapters.duckdb_log_classifier import (
+    DuckDbLogClassifier,
 )
-from ocelescope_module_socel.infrastructure.duckdb_containment_writer import (
-    DuckDbContainmentWriter,
+from ocelescope_module_socel.infrastructure.adapters.duckdb_record_importer import (
+    DuckDbRecordImporter,
 )
-from ocelescope_module_socel.infrastructure.duckdb_flow_editor import DuckDbFlowEditor
-from ocelescope_module_socel.infrastructure.duckdb_log_classifier import DuckDbLogClassifier
-from ocelescope_module_socel.infrastructure.duckdb_record_importer import DuckDbRecordImporter
-from ocelescope_module_socel.infrastructure.duckdb_socel_statistics import DuckDbSocelStatistics
-from ocelescope_module_socel.infrastructure.session_log_store import SessionLogStore
-from ocelescope_module_socel.infrastructure.session_upload_store import SessionUploadStore
+from ocelescope_module_socel.infrastructure.adapters.duckdb_socel_statistics import (
+    DuckDbSocelStatistics,
+)
+from ocelescope_module_socel.infrastructure.adapters.ocelescope_socel_workspace import (
+    OcelescopeSocelWorkspace,
+)
+from ocelescope_module_socel.infrastructure.adapters.ocelescope_upload_store import (
+    OcelescopeUploadStore,
+)
+from ocelescope_module_socel.infrastructure.ocelescope_extension import SOCEL
 
 _VALIDATED = "socel:validated"
 
@@ -62,7 +63,7 @@ class _ValidatedLogs(set[str]):
         self.lock = Lock()
 
 
-def get_socel(ocel: ApiOcel, session: ApiSession) -> SOCEL:
+def get_socel(ocel: ApiOcel, session: ApiSession) -> Generator[SOCEL]:
     """The request's log as an sOCEL; a log that is none is answered with 422 and
     the reason before the use case is built.
 
@@ -76,20 +77,24 @@ def get_socel(ocel: ApiOcel, session: ApiSession) -> SOCEL:
     validated = session.get_module_state(_VALIDATED, _ValidatedLogs)
     with validated.lock:
         if path in validated:
-            return SOCEL(ocel.con.cursor())
-        try:
-            socel = SOCEL.from_ocel(ocel)
-        except OCELExtensionError as error:
-            raise HTTPException(status_code=422, detail=str(error)) from error
-        validated.add(path)
-        return socel
+            socel = SOCEL(ocel.con.cursor())
+        else:
+            try:
+                socel = SOCEL.from_ocel(ocel)
+            except OCELExtensionError as error:
+                raise HTTPException(status_code=422, detail=str(error)) from error
+            validated.add(path)
+    try:
+        yield socel
+    finally:
+        socel.close()
 
 
 type ApiSocel = Annotated[SOCEL, Depends(get_socel)]
 
 
-def get_socel_statistics() -> SocelStatistics:
-    return DuckDbSocelStatistics()
+def get_socel_statistics(socel: ApiSocel) -> SocelStatistics:
+    return DuckDbSocelStatistics(socel)
 
 
 def get_socel_status(
@@ -110,10 +115,8 @@ def get_flow_instances(
     return GetFlowInstances(statistics=statistics)
 
 
-def get_calculate_impact(
-    statistics: Annotated[SocelStatistics, Depends(get_socel_statistics)],
-) -> CalculateImpact:
-    return CalculateImpact(statistics=statistics)
+def get_calculate_impact(socel: ApiSocel) -> CalculateImpact:
+    return CalculateImpact(flows=DuckDbFlowAnalysis(socel), calculator=ImpactCalculator())
 
 
 def get_class_counts(
@@ -122,32 +125,16 @@ def get_class_counts(
     return GetClassCounts(statistics=statistics)
 
 
-def get_log_classifier() -> LogClassifier:
-    return DuckDbLogClassifier()
+def get_log_classifier(ocel: ApiOcel) -> LogClassifier:
+    return DuckDbLogClassifier(ocel)
 
 
-def get_log_store(session: ApiSession) -> LogStore:
-    return SessionLogStore(session)
-
-
-def get_record_importer() -> RecordImporter:
-    return DuckDbRecordImporter()
-
-
-def get_attribute_flow_importer() -> AttributeFlowImporter:
-    return DuckDbAttributeFlowImporter()
-
-
-def get_containment_writer() -> ContainmentWriter:
-    return DuckDbContainmentWriter()
-
-
-def get_flow_editor() -> FlowEditor:
-    return DuckDbFlowEditor()
+def get_record_importer(ocel: ApiOcel) -> RecordImporter:
+    return DuckDbRecordImporter(ocel)
 
 
 def get_upload_store(session: ApiSession) -> UploadStore:
-    return SessionUploadStore(session)
+    return OcelescopeUploadStore(session)
 
 
 def get_class_taxonomies() -> GetClassTaxonomies:
@@ -175,32 +162,33 @@ def get_preview_record_file(
 
 
 def get_apply_socel_changes(
-    classifier: Annotated[LogClassifier, Depends(get_log_classifier)],
-    importer: Annotated[RecordImporter, Depends(get_record_importer)],
-    attributes: Annotated[AttributeFlowImporter, Depends(get_attribute_flow_importer)],
-    containment: Annotated[ContainmentWriter, Depends(get_containment_writer)],
-    editor: Annotated[FlowEditor, Depends(get_flow_editor)],
     uploads: Annotated[UploadStore, Depends(get_upload_store)],
 ) -> ApplySocelChanges:
-    return ApplySocelChanges(
-        classifier=classifier,
-        importer=importer,
-        attributes=attributes,
-        containment=containment,
-        editor=editor,
-        uploads=uploads,
-    )
+    return ApplySocelChanges(uploads=uploads, validator=PreparationValidator())
+
+
+def get_original_ocel(ocel_id: str, session: ApiSession) -> Iterator[OCEL]:
+    with session.get_ocel(ocel_id, use_original=True) as ocel:
+        yield ocel
+
+
+type ApiOriginalOcel = Annotated[OCEL, Depends(get_original_ocel)]
 
 
 def get_configure_socel(
+    ocel_id: str,
+    ocel: ApiOriginalOcel,
+    session: ApiSession,
     apply: Annotated[ApplySocelChanges, Depends(get_apply_socel_changes)],
-    store: Annotated[LogStore, Depends(get_log_store)],
 ) -> ConfigureSocel:
-    return ConfigureSocel(apply=apply, store=store)
+    return ConfigureSocel(
+        apply=apply, workspace=OcelescopeSocelWorkspace(session, ocel, ocel_id=ocel_id)
+    )
 
 
 def get_build_socel(
+    ocel: ApiOcel,
+    session: ApiSession,
     apply: Annotated[ApplySocelChanges, Depends(get_apply_socel_changes)],
-    store: Annotated[LogStore, Depends(get_log_store)],
 ) -> BuildSocel:
-    return BuildSocel(apply=apply, store=store)
+    return BuildSocel(apply=apply, workspace=OcelescopeSocelWorkspace(session, ocel))

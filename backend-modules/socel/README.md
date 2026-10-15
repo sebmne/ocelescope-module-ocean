@@ -1,40 +1,76 @@
 # sOCEL backend module
 
 Sustainability analysis of object-centric event logs for Ocelescope, mounted at
-`/modules/socel/v1`. The sOCEL model and its computations live in the `socel`
-library (`packages/sOCEL`); this module puts them behind an API. It is one hexagon,
-organised by resource, not by page: pages are the frontend's concern, and a
-page uses whichever resources it needs.
+`/modules/socel/v1`, using FastAPI and hexagonal architecture. DuckDB performs
+bulk data processing; Ocelescope supplies `ApiOcel` and session storage.
 
-```
+The refactor is incremental. [The migration plan](../../migration-plan.md) tracks
+the agreed architecture, sequence, and retained capabilities. All operations reuse
+Pydantic domain models, wrapped in plain dataclass commands at application entry points. HTTP
+pagination and small creation envelopes belong to the API. The retained sOCEL
+schema, conformance, host extension, taxonomy, and bulk quantification now live
+inside this backend. The standalone `socel` package and its vendored source have
+been removed. Attribution, allocation, and product footprints are not active
+backend features; their original implementation remains in the separate sOCEL
+project.
+
+```text
 src/ocelescope_module_socel/
-├── module.py            Socel(Module): builds the FastAPI app, mounts the router
+├── module.py                Ocelescope module and extension registration
 ├── domain/
-│   ├── models/            immutable data only: what the use cases return;
-│   │                      base.py holds Model, the base of them all
-│   └── exceptions.py      the module's own errors
+│   ├── models/              Pydantic values, invariants, and owned behavior
+│   ├── services/            Ordinary classes for ownerless business algorithms
+│   ├── taxonomies.py         Shared built-in domain definitions
+│   └── exceptions.py
 ├── application/
-│   ├── command.py         Command: base of all commands (frozen, keyword-only)
-│   ├── ports/             what use cases need from outside, as protocols
-│   └── use_cases/         one file per action: the use case and its command
-├── infrastructure/        adapters of the ports: SQL on a log, the session's logs
+│   ├── ports/               All external capabilities, including workspaces
+│   ├── workflows/           Internal coordination shared by use cases
+│   └── use_cases/           Entry operations + dataclass commands
+├── infrastructure/
+│   ├── adapters/            <technology>_<port>.py, including host workspaces
+│   ├── conformance/         V1–V10, prerequisite handling, aggregated diagnostics
+│   ├── ocelescope_extension.py  Thin OCEL subtype recognized by the host
+│   └── schema.py            Stored extension table/column definitions
 └── api/
-    ├── router.py          every resource's routes, under /{ocel_id}/...
-    ├── dependencies.py    composition root: ApiSocel, and the use cases with their adapters
-    ├── schema.py          ApiModel: camelCase base of all request/response models
-    ├── exception_handlers.py  the module's errors as HTTP statuses
-    └── routes/            one file per resource; its request/response models next to it
+    ├── dependencies.py      Request context and concrete use-case assembly
+    ├── router.py
+    ├── exception_handlers.py
+    ├── models/              Shared pagination and contextual page wrappers
+    ├── schema.py            Base for HTTP functionality schemas
+    └── routes/              One endpoint per file; shared resource prefixes
 ```
 
-Resources of an sOCEL: `status`, `flows`, `classes`. Resources of any log:
-`taxonomy` (the classes and flow categories an sOCEL may use), `classification`
-(the class per activity and object type), `flow-records` (POST: takes a record
-file and says which of its rows fit the log) and `socel` (POST: builds the
-log's sOCEL as a new log).
+## HTTP resources
+
+`api/router.py` composes log resources under `/logs/{ocel_id}` once. Endpoint
+files contain one operation and use shared models directly. Operation IDs stay
+stable so generated hook names are unchanged.
+
+| Method and path (relative to the module mount) | Result |
+| --- | --- |
+| GET `/taxonomy` | Class and flow-category trees |
+| GET `/logs/{ocel_id}/summary` | Log counts and record time range |
+| GET `/logs/{ocel_id}/class-counts` | Full class paths and counts, including unclassified entities; no root-specific flags |
+| GET `/logs/{ocel_id}/classification` | Current classes by activity/object type |
+| GET `/logs/{ocel_id}/flows` | Flow inventory |
+| GET `/logs/{ocel_id}/flows/{flow_id}/instances` | Shared page of domain items plus containment path |
+| POST `/logs/{ocel_id}/derivations` | `201`, new log identity and a readable `Location` |
+| PATCH `/logs/{ocel_id}/socel` | `204`, apply partial configuration to the original log |
+| POST `/logs/{ocel_id}/record-uploads` | `201`, uploaded file identity and metadata |
+| POST `/logs/{ocel_id}/record-uploads/{upload_id}/preview` | Completed preview |
+| POST `/logs/{ocel_id}/impact` | Completed impact report |
+
+Pages contain `items`, `total`, `offset`, and `limit`; instance pages also carry
+`path` breadcrumbs. A page beyond the end keeps the filtered total. A missing
+flow returns `404`; a valid flow with no matches returns an empty page.
+Pagination defaults to 50 and accepts 1–200 items. The frontend requests 25
+items for its instance table. Build still receives the selected view through
+`ApiOcel`; configuring an existing log always uses its complete original view.
 
 ## The sOCEL extension
 
-The module declares `extensions = [SOCEL]` (`module.py`). The host then
+The module declares `extensions = [SOCEL]` (`module.py`), using its own thin
+`infrastructure/ocelescope_extension.py` type. The host then
 recognizes sOCELs among the logs - `SOCEL.from_ocel` runs `SOCEL.validate`, the
 declared tables plus the conformance rules - and lists the extension in a log's
 metadata, which the frontend reads. The frontend guards its pages with it
@@ -47,8 +83,8 @@ a large log, so the module runs it once per log and not on every request: a
 session's logs are files that are written once.
 
 The counts of the overview (`status`, `flows`, `classes`) come from aggregate
-queries behind the port `SocelStatistics`, not from the library's managers,
-which hand out one object per record, instance and classification. `flows`
+queries behind the port `SocelStatistics`. The extension installs no
+record-by-record manager facade. `flows`
 breaks a flow down by object type. Single objects come a page at a time from
 `flows/{flow_id}/instances`, filtered by object type, by the object they lie
 inside, or by a search in the object id.
@@ -74,53 +110,98 @@ them ends before the event's start and two different ends for one event.
 `data/flow_records/` holds an example for the built-in log "Automotive
 Manufacturing".
 
-The builder does not set containment yet: a built sOCEL keeps the containment
-its source log holds, which for a plain log is none.
+The builder can infer flow containment from configured object-type relationships.
 
 Everything a user decides is a rule on the type level (activity, object type,
 flow), and no response should grow with the number of events or objects: logs
 with hundreds of thousands of each are normal.
 
-A log is downloaded through Ocelescope's own download, which keeps the sOCEL
-tables; the module has no export of its own (the request's log is read-only).
+Logs use Ocelescope's own download. Populated XML/SQLite round trips preserve
+sOCEL data, including classification, event ends, external references, and
+containment. The pinned host currently loses extension timestamp types in JSON
+and omits empty extension tables in all three formats. Those affected round trips
+lose sOCEL recognition. Seven strict expected-failure cases in
+[the host integration tests](tests/test_host_integration.py) document these limitations; the
+module keeps its full conformance checks.
 
 OCEAn, the earlier object-centric emission analysis, is parked as a module of
 its own in the repository's `legacy/` folder (see its README).
 
 ## Rules
 
-- Dependencies point inwards: `module` -> `api` -> `application` -> `domain`.
-  A use case that needs something from outside declares a port in
-  `application/ports/`; its adapter goes in `infrastructure/`, between `api` and
-  `application`.
-- `domain` and `application` never import `fastapi`, `ocelescope_backend` or
-  `pydantic`: plain dataclasses. A domain model subclasses `Model` and only
-  lists its fields: the base makes it a frozen, keyword-only dataclass, as
-  `Command` does for commands.
-- Routes get their use cases from `api/dependencies.py`, never build them.
-- An endpoint only runs its use case and maps the result. A use case gets
-  everything it works on - the sOCEL and any input - as one `<Action>Command`,
-  defined next to it; its constructor is for ports. A command subclasses
-  `Command` and only lists its fields: the base makes it a frozen, keyword-only
-  dataclass.
-- Computations on an sOCEL belong in the `socel` library, not here.
-- Use cases return finished data, nothing lazy: the request's OCEL is closed when
-  the request ends.
+- The complete backend is independent of the standalone `socel` library.
+  Dependencies point inward. Domain models and services contain no FastAPI,
+  Ocelescope, DuckDB, or connection-backed `socel` imports. Pydantic is a deliberate
+  domain dependency. Every application port and use case has the same
+  independence. Domain code never imports application, including its ports.
+- Models own their invariants and naturally owned operations. For example,
+  `DirectionFactors.apply(...)` distinguishes absent factors from zero,
+  `ColumnMapping.is_readable()` owns mapping completeness, and `FlowEdit` owns
+  name/unit normalization and valid conversion factors.
+- Public domain services are always ordinary classes, stateless or holding
+  immutable configuration. `ImpactCalculator.calculate(...)` combines flows and
+  periods; `PreparationValidator.prepare(...)` checks supplied log facts, taxonomy
+  references, and resulting flow names. Private helper functions remain allowed.
+  Internal calculations need no service superclass or port.
+- Use cases coordinate ports and domain behavior through `execute(command)`.
+  Every command is an ordinary dataclass defined beside its use case, solely
+  holding parameters. Commands may hold domain models, such as
+  `CalculateImpactCommand(analysis=...)`, but never validate, normalize, inherit
+  domain models, or carry live logs, sessions, adapters, or connections.
+  Shared internal coordination lives in `application/workflows/`.
+- `domain/taxonomies.py` holds one fixed immutable `TAXONOMY`. Construct nested
+  `ClassNode(label=..., children=...)` values directly; leaves need only a label.
+  Nodes store no full path: `paths(parent_path="")` reconstructs identifiers during
+  traversal. The API returns these local-name trees, and frontend options derive
+  their selection values. Preparation, API choices, and conformance share the
+  same definition, with no custom-taxonomy injection or signature catalog. The
+  summary reads `HANDLING_UNIT_ROOT` and `OPERATION_ROOT` from this module; these
+  are the same nodes used in the taxonomy, so their labels are defined only once.
+- Database conformance uses explicit `Valid()` / `Invalid(issues)` results and an
+  ordered pipeline. Success has no payload; `combine` accumulates issues directly. The ten named checks live in `infrastructure/conformance/rules/`,
+  accumulating independent issues and skipping checks with failed prerequisites.
+- Ports describe external capabilities using structural protocols. Adapters do
+  not inherit them. All ports live in `application/ports/`. Adapters live under
+  `infrastructure/adapters/` using the technology/port naming convention.
+- Routes get assembled use cases from `api/dependencies.py` and reuse domain
+  models directly. `api/models/pagination.py` owns `Pagination` and `Page[T]`;
+  its shared policy limits HTTP pages to 200 items. Items are domain models.
+  The build route composes its preparation fields with a host log name in
+  `BuildSocelRequest`. Its use case returns a string; the route owns `CreatedLog`
+  and the Location header. Neither HTTP schema is a domain model or command.
+- Return completed results during the request. Future job/CLI entry adapters
+  resolve fresh context and invoke the same use cases; no job framework is added
+  by this migration.
+- `SocelWorkspace` owns one lazy working copy. The `ApplySocelChanges` workflow coordinates
+  preview, domain preparation, writing, and conformance checks; build/configure
+  choose new versus replacement publication. The host owns borrowed source logs.
+  Configure explicitly resolves the original log, while build uses `ApiOcel`.
+  Registry insertion or replacement handle assignment is the commit point.
+  Failed new/replacement writes clean only their tracked files. After commit,
+  obsolete-file cleanup and SSE failures are logged without failing publication.
+  Deferred file cleanup retries on the next publication using session module
+  state. A module lock serializes publication/cleanup; borrowed readers keep
+  their snapshot, and replacement rechecks that the host handle still exists.
 
-`pnpm run check:backend` (repository root) runs ruff, pyright and
-import-linter; the rules above are import-linter contracts in `pyproject.toml`.
+`pnpm run check:backend` runs ruff, pyright, import-linter, and pytest. Existing
+HTTP tests use real DuckDB logs and Ocelescope sessions. Pure domain tests can
+run independently of those fixtures from this directory:
+
+```sh
+uv run pytest tests/unit --confcutdir=tests/unit -q
+```
 
 ## Adding an endpoint
 
-1. New data in `domain/models/`, as subclasses of `Model`.
-2. `application/use_cases/<action>.py`: the `<Action>Command(Command)` (the
-   sOCEL plus any input) and the use case class with `execute(command)`. Errors of its own go in
-   `domain/exceptions.py`, mapped to HTTP statuses in
-   `api/exception_handlers.py`.
-3. A port in `application/ports/` if the use case needs something from outside.
-   Its adapter goes in `infrastructure/`.
-4. `api/dependencies.py`: a `get_<action>` function building the use case.
-5. `api/routes/<resource>.py`: request/response models (`ApiModel`) and the
-   route with a stable `operation_id` (it names the generated frontend hook);
-   a new routes file is included in `api/router.py`.
-6. `pnpm --filter @instance/socel-module build` regenerates the frontend client.
+1. Define Pydantic domain models with applicable invariants and behavior.
+2. For a business algorithm without a natural model owner, add a domain service
+   class. For an external capability, add an application port and infrastructure adapter.
+3. Add a use case under `application/use_cases/`, with injected dependencies and
+   `execute(command)`. Define its plain dataclass command beside it, grouping
+   parameters and holding existing domain models without copying their fields.
+   Put any shared internal coordination under `application/workflows/`.
+4. Assemble the request-bound adapters and use case in `api/dependencies.py`.
+5. Add the endpoint under `api/routes/`, reusing the input/report models and a
+   stable operation ID. One endpoint per file is welcome; no DTO copy is needed.
+6. Run the backend checks and `pnpm --filter @instance/socel-module build` to
+   regenerate the frontend client, then type-check affected frontend code.

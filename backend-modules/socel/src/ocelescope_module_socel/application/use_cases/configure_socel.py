@@ -1,28 +1,23 @@
-from ocelescope_module_socel.application.command import Command
-from ocelescope_module_socel.application.ports.log_store import LogStore
-from ocelescope_module_socel.application.use_cases.socel_changes import (
-    ApplySocelChanges,
-    SocelChanges,
-)
+from dataclasses import dataclass
+
+from ocelescope_module_socel.application.ports.socel_workspace import SocelWorkspace
+from ocelescope_module_socel.application.workflows.apply_socel_changes import ApplySocelChanges
+from ocelescope_module_socel.domain.models.preparation import PreparationDraft
 
 
-class ConfigureSocelCommand(Command):
-    ocel_id: str
-    changes: SocelChanges
+@dataclass(frozen=True, kw_only=True)
+class ConfigureSocelCommand:
+    preparation: PreparationDraft
 
 
 class ConfigureSocel:
-    """Changes an sOCEL in place: classes, and flows with their records. The
-    whole log is changed, not the part the app's filters show, and it keeps its
-    id and name."""
+    """Apply changes to the bound original log, keeping its host identity."""
 
-    def __init__(self, *, apply: ApplySocelChanges, store: LogStore) -> None:
+    def __init__(self, *, apply: ApplySocelChanges, workspace: SocelWorkspace) -> None:
         self._apply = apply
-        self._store = store
+        self._workspace = workspace
 
     def execute(self, command: ConfigureSocelCommand) -> None:
-        with (
-            self._store.get(command.ocel_id) as ocel,
-            self._apply(ocel, command.changes) as changed,
-        ):
-            self._store.replace(command.ocel_id, changed)
+        with self._workspace.open() as work:
+            self._apply.apply(work, command.preparation)
+            work.publish_replacing()

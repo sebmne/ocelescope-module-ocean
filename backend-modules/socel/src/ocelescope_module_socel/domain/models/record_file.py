@@ -1,6 +1,8 @@
 from datetime import datetime
 from typing import Literal
 
+from pydantic import field_validator
+
 from ocelescope_module_socel.domain.models.base import Model
 
 # What keeps rows of a record file out of the sOCEL.
@@ -30,6 +32,19 @@ class ColumnMapping(Model):
     end_time: str | None = None
     event: str | None = None
 
+    @field_validator("flow", "object", "quantity", "start_time", "end_time", "event")
+    @classmethod
+    def _empty_as_absent(cls, value: str | None) -> str | None:
+        return value or None
+
+    def is_readable(self) -> bool:
+        """Whether this mapping can describe records or event end times alone."""
+        records = None not in (self.flow, self.object, self.quantity) and (
+            self.event is not None or None not in (self.start_time, self.end_time)
+        )
+        event_ends = None not in (self.event, self.end_time)
+        return records or event_ends
+
 
 class RecordFileColumns(Model):
     """The names of an uploaded file's columns, how many rows it has, the
@@ -42,6 +57,12 @@ class RecordFileColumns(Model):
     sample: tuple[tuple[str | None, ...], ...]
 
 
+class UploadedRecordFile(RecordFileColumns):
+    """An uploaded file's identity and discovered contents."""
+
+    upload_id: str
+
+
 class FlowDefinition(Model):
     """What a record file cannot know about a flow: set once, by hand.
     `external_ref` points to the flow in another system, e.g. a database of
@@ -50,6 +71,11 @@ class FlowDefinition(Model):
     unit: str
     category: str
     external_ref: str | None = None
+
+    @field_validator("external_ref")
+    @classmethod
+    def _empty_reference(cls, value: str | None) -> str | None:
+        return value or None
 
 
 class FlowInFile(Model):

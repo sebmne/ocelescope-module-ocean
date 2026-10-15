@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { FlowEditModel } from "../../api/socel";
+import type { FlowEdit } from "../../api/socel";
 import { type Flow, useFlowInventory } from "../../hooks/useFlowInventory";
 
 /** A flow as the page holds it while it is edited. */
@@ -72,7 +72,7 @@ export function useFlowEdits() {
   };
 
   const changed = flows.filter(isChanged);
-  const edits: FlowEditModel[] = changed.map((flow) => {
+  const edits: FlowEdit[] = changed.map((flow) => {
     const draft = draftOf(flow);
     return {
       flowId: flow.flowId,

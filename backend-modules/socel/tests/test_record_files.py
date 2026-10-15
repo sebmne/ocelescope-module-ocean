@@ -8,7 +8,7 @@ from example_log import MAPPING, RECORDS_CSV
 
 def upload(api: Api, ocel_id: str, content: bytes = RECORDS_CSV) -> str:
     response = api.upload_record_file(ocel_id, content)
-    assert response.status_code == 200, response.text
+    assert response.status_code == 201, response.text
     return response.json()["uploadId"]
 
 
@@ -149,12 +149,12 @@ def test_a_build_needs_a_definition_for_every_flow_the_file_brings(
     assert response.json() == {"detail": "The flow 'heat' needs a unit and a category."}
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="Defect: the route documents 422 for a file that is no CSV, but any bytes are "
-    "taken as an empty CSV with one column.",
-)
 def test_a_file_that_is_no_csv_is_refused(api: Api, plain_log: str) -> None:
     response = api.upload_record_file(plain_log, b"\x00\x01\x02 binary")
 
     assert response.status_code == 422
+
+
+@pytest.mark.parametrize("content", [b"\x00", b'name\n"text\x00value"\n'])
+def test_nul_bytes_are_not_accepted_as_csv_text(api: Api, plain_log: str, content: bytes) -> None:
+    assert api.upload_record_file(plain_log, content).status_code == 422

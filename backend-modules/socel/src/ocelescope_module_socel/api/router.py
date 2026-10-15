@@ -1,22 +1,35 @@
 from fastapi import APIRouter
 
 from ocelescope_module_socel.api.routes import (
+    build_socel,
     classes,
     classification,
-    flow_records,
-    flows,
+    configure_socel,
+    flow_instances,
+    flow_inventory,
     impact,
+    preview_record_file,
     status,
     taxonomy,
+    upload_record_file,
 )
 
-# Everything the module offers, by resource. Pages are the frontend's concern:
-# a page uses whichever resources it needs.
-router = APIRouter()
-router.include_router(status.router)
-router.include_router(flows.router)
-router.include_router(impact.router)
-router.include_router(classes.router)
+router = APIRouter(tags=["sOCEL"])
+logs = APIRouter(prefix="/logs/{ocel_id}")
+
+for resource in (
+    status,
+    classes,
+    flow_inventory,
+    flow_instances,
+    classification,
+    build_socel,
+    configure_socel,
+    upload_record_file,
+    preview_record_file,
+    impact,
+):
+    logs.include_router(resource.router)
+
 router.include_router(taxonomy.router)
-router.include_router(classification.router)
-router.include_router(flow_records.router)
+router.include_router(logs)

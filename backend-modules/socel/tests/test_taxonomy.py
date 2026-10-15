@@ -2,16 +2,20 @@
 
 from api import Api
 
-
-def paths(nodes: list[dict]) -> list[str]:
-    return [path for node in nodes for path in (node["path"], *paths(node["children"]))]
+from ocelescope_module_socel.domain.models.class_taxonomy import ClassTaxonomies
 
 
 def test_the_taxonomy_is_given_as_trees(api: Api) -> None:
-    taxonomy = api.get_class_taxonomies().json()
+    response = api.get_class_taxonomies()
+    assert response.status_code == 200
+    payload = response.json()
+    taxonomy = ClassTaxonomies.model_validate(payload)
 
-    assert [node["path"] for node in taxonomy["objectClasses"]] == ["hu", "pr"]
-    assert "op.manufacturing.surface.coating" in paths(taxonomy["eventClasses"])
-    assert "material.auxiliary.gas" in paths(taxonomy["flowCategories"])
-    surface = taxonomy["eventClasses"][0]["children"][0]["children"][5]
-    assert (surface["path"], surface["label"]) == ("op.manufacturing.surface", "surface")
+    assert [node.label for node in taxonomy.object_classes] == ["hu", "pr"]
+    assert "op.manufacturing.surface.coating" in taxonomy.event_classes[0].paths()
+    assert "material.auxiliary.gas" in taxonomy.flow_categories[1].paths()
+    surface = payload["eventClasses"][0]["children"][0]["children"][5]
+    assert surface == {
+        "label": "surface",
+        "children": [{"label": "cleaning", "children": []}, {"label": "coating", "children": []}],
+    }

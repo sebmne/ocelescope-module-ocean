@@ -1,5 +1,6 @@
 """Building an sOCEL: a new log beside the one it came from."""
 
+import pytest
 from api import Api
 from conftest import build
 from example_log import FLOWS
@@ -122,3 +123,27 @@ def test_a_refused_build_adds_no_log(api: Api, session: Session, plain_log: str)
 
 def test_a_missing_log_is_not_found(api: Api) -> None:
     assert api.build_socel("missing", {"name": "x"}).status_code == 404
+
+
+def test_a_created_log_returns_a_readable_location(api: Api, plain_log: str) -> None:
+    response = api.build_socel(plain_log, {"name": "new sOCEL"})
+    assert response.status_code == 201
+    assert response.headers["location"].endswith(f"/logs/{response.json()['ocelId']}/summary")
+    assert api.get_socel_status(response.json()["ocelId"]).status_code == 200
+
+
+def test_new_log_names_are_trimmed_at_the_http_boundary(
+    api: Api, session: Session, plain_log: str
+) -> None:
+    response = api.build_socel(plain_log, {"name": "  prepared plant  "})
+    assert response.status_code == 201
+    assert session.ocels[response.json()["ocelId"]].name == "prepared plant"
+
+
+@pytest.mark.parametrize("name", ["", "  "])
+def test_blank_new_log_names_are_refused_without_publishing(
+    api: Api, session: Session, plain_log: str, name: str
+) -> None:
+    before = set(session.ocels)
+    assert api.build_socel(plain_log, {"name": name}).status_code == 422
+    assert set(session.ocels) == before

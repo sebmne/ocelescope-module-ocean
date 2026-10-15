@@ -1,10 +1,10 @@
 from fastapi import FastAPI
 from ocelescope_backend.app.modules import Module, ModuleMeta
 from packaging.version import Version
-from socel import SOCEL
 
 from ocelescope_module_socel.api import router
 from ocelescope_module_socel.api.exception_handlers import register_exception_handlers
+from ocelescope_module_socel.infrastructure.ocelescope_extension import SOCEL
 
 
 class Socel(Module):

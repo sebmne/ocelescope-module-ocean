@@ -26,15 +26,13 @@ typeCheckingMode = "standard"
 exclude = ["**/node_modules", "**/__pycache__", "**/.*", "legacy"]
 
 [tool.uv.workspace]
-members = ["backend-modules/*", "packages/*"]
+members = ["backend-modules/*"]
 
 [tool.uv.sources]
 # Unreleased: the branch feat/ocel-extensions of promi4s/ocelescope (0.10.1 plus
 # OCEL extensions - modules declare `extensions`, endpoints receive them through
-# `ocel_as`). All packages from the same commit, the one the socel
-# library pins too.
+# `ocel_as`). Keep these host packages on the same commit.
 ocelescope = { git = "https://github.com/promi4s/ocelescope", rev = "329e57c0089703d1738761eaa7040d412dbbdd41", subdirectory = "src/ocelescope" }
 ocelescope-backend = { git = "https://github.com/promi4s/ocelescope", rev = "329e57c0089703d1738761eaa7040d412dbbdd41", subdirectory = "src/backend/ocelescope-backend" }
 ocelescope-module-ocel = { git = "https://github.com/promi4s/ocelescope", rev = "329e57c0089703d1738761eaa7040d412dbbdd41", subdirectory = "src/backend/modules/ocelescope-module-ocel" }
 ocelescope-module-socel = { workspace = true }
-socel = { workspace = true }

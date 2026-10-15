@@ -2,15 +2,10 @@ from ocelescope_module_socel.domain.models.base import Model
 
 
 class ClassCount(Model):
-    """How many objects or events carry a socel_class (None: unclassified).
-
-    `is_core` marks the classes that make handling units (for objects) or
-    operations (for events).
-    """
+    """How many objects or events carry a full class path (None: unclassified)."""
 
     socel_class: str | None
     count: int
-    is_core: bool
 
 
 class ClassCounts(Model):

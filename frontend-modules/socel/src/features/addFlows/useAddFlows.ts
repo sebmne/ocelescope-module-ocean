@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import type { SocelChangesModel } from "../../api/socel";
+import type { PreparationDraft } from "../../api/socel";
 import { useClassTaxonomies } from "../../hooks/useClassTaxonomies";
 import { classOptions } from "../../lib/classOptions";
 import { type ContainmentDraft, problemOf, typeContainments } from "./containment";
@@ -16,7 +16,7 @@ import { useTypeRelations } from "./useTypeRelations";
 
 /** The flow part of the changes to a log. */
 export type FlowChanges = Pick<
-  SocelChangesModel,
+  PreparationDraft,
   "flows" | "records" | "attributeFlows" | "containment"
 >;
 

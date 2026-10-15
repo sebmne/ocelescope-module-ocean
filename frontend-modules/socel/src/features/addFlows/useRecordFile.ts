@@ -1,18 +1,17 @@
 import { useState } from "react";
 import {
-  type ColumnMappingModel,
-  type RecordFilePreviewModel,
-  type RecordIssueModel,
-  type UploadedRecordFileModel,
+  type ColumnMapping,
+  type RecordFilePreview,
+  type UploadedRecordFile,
   usePreviewRecordFile,
   useUploadRecordFile,
 } from "../../api/socel";
 import { useSelectedOcel } from "../../hooks/useSelectedOcel";
 
-export type RecordFile = UploadedRecordFileModel;
-export type RecordIssue = RecordIssueModel;
-export type Preview = RecordFilePreviewModel;
-export type Mapping = ColumnMappingModel;
+export type RecordFile = UploadedRecordFile;
+export type { RecordIssue } from "../../api/socel";
+export type Preview = RecordFilePreview;
+export type Mapping = ColumnMapping;
 /** What a column of the file can hold. */
 export type Role = keyof Mapping;
 

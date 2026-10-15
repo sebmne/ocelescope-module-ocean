@@ -1,12 +1,12 @@
-from ocelescope import OCEL
+from dataclasses import dataclass
 
-from ocelescope_module_socel.application.command import Command
 from ocelescope_module_socel.application.ports.log_classifier import LogClassifier
 from ocelescope_module_socel.domain.models.log_classification import LogClassification
 
 
-class GetLogClassificationCommand(Command):
-    ocel: OCEL
+@dataclass(frozen=True, kw_only=True)
+class GetLogClassificationCommand:
+    pass
 
 
 class GetLogClassification:
@@ -17,4 +17,4 @@ class GetLogClassification:
         self._classifier = classifier
 
     def execute(self, command: GetLogClassificationCommand) -> LogClassification:
-        return self._classifier.read(command.ocel)
+        return self._classifier.read()

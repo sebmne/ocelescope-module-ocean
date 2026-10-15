@@ -1,4 +1,4 @@
-import type { TypeContainmentModel } from "../../api/socel";
+import type { TypeContainment } from "../../api/socel";
 
 /** An object-to-object relation between two object types: from `source` to
  * `target` under `qualifier`, how many pairs it has, and the most targets one
@@ -53,7 +53,7 @@ export function problemOf(
 export function typeContainments(
   containments: readonly ContainmentDraft[],
   flows: readonly string[],
-): TypeContainmentModel[] {
+): TypeContainment[] {
   return containments.flatMap((containment) => {
     const kept = containment.flows.filter((flow) => flows.includes(flow));
     return containment.objectType &&

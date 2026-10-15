@@ -1,7 +1,7 @@
-import { type FlowModel, useGetFlowInventory } from "../api/socel";
+import { type FlowSummary, useGetFlowInventory } from "../api/socel";
 import { useSelectedOcel } from "./useSelectedOcel";
 
-export type Flow = FlowModel;
+export type Flow = FlowSummary;
 
 /** The flows of the selected sOCEL with their counts, over the log and per object
  * type; only for an sOCEL. */

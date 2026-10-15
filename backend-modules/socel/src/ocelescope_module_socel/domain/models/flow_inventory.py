@@ -38,13 +38,3 @@ class FlowInstanceRow(Model):
     interval_records: int
     event_records: int
     quantity: float
-
-
-class FlowInstancePage(Model):
-    """One page of a flow's instances: the rows, how many there are in all under
-    the same filter, and, when the page shows what lies inside an object, the
-    way from the outermost object down to it."""
-
-    total: int
-    rows: tuple[FlowInstanceRow, ...]
-    path: tuple[str, ...]

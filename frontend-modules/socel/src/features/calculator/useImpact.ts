@@ -1,22 +1,22 @@
 import { keepPreviousData } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import {
-  type DirectionFactorsModel,
-  type ImpactReportModel,
-  type ImpactRequestPeriod,
+  type DirectionFactors,
+  type ImpactAnalysis,
+  type ImpactReport as ImpactReportResult,
   useCalculateImpact,
 } from "../../api/socel";
 import { useSelectedOcel } from "../../hooks/useSelectedOcel";
 
-export type ImpactReport = ImpactReportModel;
-export type Period = ImpactRequestPeriod;
+export type ImpactReport = ImpactReportResult;
+export type Period = NonNullable<ImpactAnalysis["period"]>;
 
 /** The impact of the selected sOCEL's flows with the given factors (kg CO2e per
  * unit into and out of the objects), per flow, in all and per period. Asked again a moment after the
  * factors stop changing, not on every keystroke. */
 export function useImpact(
   period: Period,
-  factors: Readonly<Record<string, DirectionFactorsModel>>,
+  factors: Readonly<Record<string, DirectionFactors>>,
 ) {
   const { ocelId, enabled } = useSelectedOcel();
   const settled = useSettled(factors, 300);

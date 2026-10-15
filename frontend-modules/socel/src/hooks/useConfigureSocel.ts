@@ -1,6 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  type SocelChangesModel,
+  type PreparationDraft,
   useConfigureSocel as useConfigureSocelRequest,
 } from "../api/socel";
 import { useSelectedOcel } from "./useSelectedOcel";
@@ -15,7 +15,7 @@ export function useConfigureSocel() {
   const request = useConfigureSocelRequest<Error>();
   const queryClient = useQueryClient();
 
-  const configure = (data: SocelChangesModel) =>
+  const configure = (data: PreparationDraft) =>
     request.mutateAsync({ ocelId, data }).then(() =>
       // Everything asked of the log so far was asked of the old one.
       queryClient.invalidateQueries(),

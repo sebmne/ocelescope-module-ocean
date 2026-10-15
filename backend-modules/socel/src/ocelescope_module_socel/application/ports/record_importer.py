@@ -1,8 +1,6 @@
 from collections.abc import Mapping
 from typing import Protocol
 
-from ocelescope import OCEL
-
 from ocelescope_module_socel.domain.models.record_file import (
     ColumnMapping,
     FlowDefinition,
@@ -25,17 +23,16 @@ class RecordImporter(Protocol):
         InvalidRecordFile: If the content is no such file.
     """
 
-    def columns(self, ocel: OCEL, content: bytes) -> RecordFileColumns:
+    def columns(self, content: bytes) -> RecordFileColumns:
         """The file's columns and its first rows."""
         ...
 
-    def preview(self, ocel: OCEL, content: bytes, mapping: ColumnMapping) -> RecordFilePreview:
+    def preview(self, content: bytes, mapping: ColumnMapping) -> RecordFilePreview:
         """What the file holds and which of its rows fit the log."""
         ...
 
     def write(
         self,
-        ocel: OCEL,
         content: bytes,
         mapping: ColumnMapping,
         flows: Mapping[str, FlowDefinition],
