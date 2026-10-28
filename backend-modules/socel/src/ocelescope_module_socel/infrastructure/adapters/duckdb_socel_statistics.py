@@ -1,4 +1,5 @@
 from ocelescope.ocel.constants.pm4py import (
+    ACTIVITY_COL,
     EID_COL,
     OBJECT_CHANGED_FIELD,
     OID_COL,
@@ -8,12 +9,17 @@ from ocelescope.ocel.constants.pm4py import (
 from ocelescope.ocel.constants.tables import EVENTS_TABLE, OBJECT_CHANGES_TABLE, OBJECTS_TABLE
 
 from ocelescope_module_socel.application.errors import FlowNotFound
-from ocelescope_module_socel.application.ports.socel_statistics import InstanceOrder, InstanceSlice
+from ocelescope_module_socel.application.ports.socel_statistics import (
+    InstanceOrder,
+    InstanceSlice,
+    RecordSlice,
+)
 from ocelescope_module_socel.domain import taxonomies
 from ocelescope_module_socel.domain.models.class_counts import ClassCount, ClassCounts
 from ocelescope_module_socel.domain.models.flow_inventory import (
     FlowByObjectType,
     FlowInstanceRow,
+    FlowRecord,
     FlowSummary,
 )
 from ocelescope_module_socel.domain.models.socel_status import SocelStatus
@@ -24,6 +30,7 @@ from ocelescope_module_socel.infrastructure.schema import (
     FLOW,
     INTERVAL_RECORDS,
     SOCEL_CLASS,
+    SOCEL_END_TIME,
 )
 
 # A flow instance is an object at which a flow is observed: through a record, or
@@ -157,11 +164,7 @@ class DuckDbSocelStatistics:
         limit: int,
     ) -> InstanceSlice:
         socel = self._socel
-        if (
-            socel.sql(f"SELECT 1 FROM {FLOW.name} WHERE flow_id = ?", params=[flow_id]).fetchone()
-            is None
-        ):
-            raise FlowNotFound(flow_id)
+        _require_flow(socel, flow_id)
         ordering = "quantity DESC, object_id" if order == "quantity" else "object_id"
         rows = socel.sql(
             f"""
@@ -234,6 +237,59 @@ class DuckDbSocelStatistics:
             _path_to(socel, flow_id, inside) if inside is not None else (),
         )
 
+    def flow_records(self, flow_id: str, object_id: str, *, offset: int, limit: int) -> RecordSlice:
+        socel = self._socel
+        _require_flow(socel, flow_id)
+        event_end = (
+            f'event."{SOCEL_END_TIME}"'
+            if _has_column(socel, EVENTS_TABLE, SOCEL_END_TIME)
+            else "NULL::TIMESTAMP"
+        )
+        rows = socel.sql(
+            f"""
+            WITH record AS (
+                SELECT record_id, 'interval' AS kind, quantity, start_time AS start,
+                       end_time AS "end", NULL::VARCHAR AS event_id, NULL::VARCHAR AS activity
+                FROM {INTERVAL_RECORDS.name}
+                WHERE flow_id = $flow AND object_id = $object
+                UNION ALL
+                SELECT record.record_id, 'event', record.quantity, event."{TIMESTAMP_COL}",
+                       {event_end}, record.event_id, event."{ACTIVITY_COL}"
+                FROM {EVENT_RECORDS.name} record
+                JOIN {EVENTS_TABLE} event ON event."{EID_COL}" = record.event_id
+                WHERE record.flow_id = $flow AND record.object_id = $object
+            ),
+            page AS (
+                SELECT * FROM record ORDER BY start, record_id LIMIT $limit OFFSET $offset
+            ),
+            total AS (SELECT count(*) AS value FROM record)
+            SELECT page.*, total.value FROM total LEFT JOIN page ON true
+            ORDER BY start, record_id
+            """,
+            params={  # pyright: ignore[reportArgumentType]
+                "flow": flow_id,
+                "object": object_id,
+                "limit": limit,
+                "offset": offset,
+            },
+        ).fetchall()
+        return (
+            tuple(
+                FlowRecord(
+                    record_id=record_id,
+                    kind=kind,
+                    quantity=quantity,
+                    start=start,
+                    end=end,
+                    event_id=event_id,
+                    activity=activity,
+                )
+                for record_id, kind, quantity, start, end, event_id, activity, _ in rows
+                if record_id is not None
+            ),
+            rows[0][7],
+        )
+
     def class_counts(self) -> ClassCounts:
         socel = self._socel
         objects = socel.sql(
@@ -251,6 +307,14 @@ class DuckDbSocelStatistics:
             objects=_class_counts(objects),
             events=_class_counts(events),
         )
+
+
+def _require_flow(socel: SOCEL, flow_id: str) -> None:
+    if (
+        socel.sql(f"SELECT 1 FROM {FLOW.name} WHERE flow_id = ?", params=[flow_id]).fetchone()
+        is None
+    ):
+        raise FlowNotFound(flow_id)
 
 
 def _path_to(socel: SOCEL, flow_id: str, object_id: str) -> tuple[str, ...]:

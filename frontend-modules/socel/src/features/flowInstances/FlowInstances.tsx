@@ -24,6 +24,7 @@ import {
 } from "../../components";
 import { useFlowInventory } from "../../hooks/useFlowInventory";
 import { formatCount } from "../../lib/format";
+import RecordList from "./RecordList";
 import {
   type FlowInstance,
   type InstanceOrder,
@@ -33,7 +34,7 @@ import {
 
 // Radix has no empty value: this one stands for "every type".
 const ALL = "__all__";
-const COLUMNS = "minmax(0, 1.6fr) minmax(0, 1fr) 96px 96px 96px 140px";
+const COLUMNS = "24px minmax(0, 1.6fr) minmax(0, 1fr) 96px 96px 96px 140px";
 
 const formatQuantity = (quantity: number) =>
   quantity.toLocaleString(undefined, { maximumFractionDigits: 1 });
@@ -195,6 +196,7 @@ export default function FlowInstances({
                 py="2"
                 style={{ background: "var(--gray-a2)" }}
               >
+                <span />
                 <HeaderCell>Object</HeaderCell>
                 <HeaderCell>Inside</HeaderCell>
                 <HeaderCell end>Contains</HeaderCell>
@@ -209,6 +211,7 @@ export default function FlowInstances({
               {data.items.map((row) => (
                 <InstanceRow
                   key={row.objectId}
+                  flowId={flowId}
                   row={row}
                   unit={flow?.unit ?? ""}
                   onStepInto={stepInto}
@@ -251,78 +254,119 @@ export default function FlowInstances({
   );
 }
 
+// An object's row; one with records of its own opens to them.
 function InstanceRow({
+  flowId,
   row,
   unit,
   onStepInto,
 }: {
+  flowId: string;
   row: FlowInstance;
   unit: string;
   onStepInto: (objectId: string) => void;
 }) {
   const colorOf = useColorOf("objectType");
+  const [isOpen, setOpen] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const canOpen = row.intervalRecords + row.eventRecords > 0;
+  const toggle = () => setOpen((open) => !open);
   return (
-    <Grid
-      role="row"
-      columns={COLUMNS}
-      align="center"
-      gap="3"
-      px="3"
-      py="2"
-      style={{ borderTop: "1px solid var(--gray-a4)" }}
-    >
-      <Flex align="center" gap="2" minWidth="0">
-        <span
-          aria-hidden
+    <Box style={{ borderTop: "1px solid var(--gray-a4)" }}>
+      <Grid
+        role="row"
+        tabIndex={canOpen ? 0 : undefined}
+        aria-expanded={canOpen ? isOpen : undefined}
+        aria-label={
+          canOpen ? `${isOpen ? "Hide" : "Show"} the records of ${row.objectId}` : undefined
+        }
+        columns={COLUMNS}
+        align="center"
+        gap="3"
+        px="3"
+        py="2"
+        onClick={canOpen ? toggle : undefined}
+        onKeyDown={(event) => {
+          if (
+            canOpen &&
+            event.target === event.currentTarget &&
+            (event.key === "Enter" || event.key === " ")
+          ) {
+            event.preventDefault();
+            toggle();
+          }
+        }}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        style={{
+          cursor: canOpen ? "pointer" : undefined,
+          background: canOpen && hovered ? "var(--gray-a2)" : undefined,
+          transition: "background 100ms",
+        }}
+      >
+        <Flex
           style={{
-            flex: "none",
-            width: 8,
-            height: 8,
-            borderRadius: "50%",
-            background: colorOf(row.objectType),
+            color: canOpen ? "var(--gray-10)" : "var(--gray-6)",
+            transform: isOpen ? "rotate(90deg)" : undefined,
+            transition: "transform 150ms",
           }}
-        />
-        <Text size="2" weight="medium" truncate>
-          {row.objectId}
+        >
+          <ChevronRightIcon size={16} aria-hidden />
+        </Flex>
+        <Flex align="center" gap="2" minWidth="0">
+          <span
+            aria-hidden
+            style={{
+              flex: "none",
+              width: 8,
+              height: 8,
+              borderRadius: "50%",
+              background: colorOf(row.objectType),
+            }}
+          />
+          <Text size="2" weight="medium" truncate>
+            {row.objectId}
+          </Text>
+          <Badge color="gray" variant="soft" size="1">
+            {row.objectType}
+          </Badge>
+        </Flex>
+        <Flex minWidth="0">
+          {row.parentObjectId ? (
+            <StepIn
+              label={`Show what lies inside ${row.parentObjectId}`}
+              onClick={() => onStepInto(row.parentObjectId as string)}
+            >
+              {row.parentObjectId}
+            </StepIn>
+          ) : (
+            <Text size="2" color="gray">
+              –
+            </Text>
+          )}
+        </Flex>
+        <Flex justify="end">
+          {row.contains > 0 ? (
+            <StepIn
+              label={`Show the ${row.contains} objects inside ${row.objectId}`}
+              onClick={() => onStepInto(row.objectId)}
+            >
+              {formatCount(row.contains)}
+            </StepIn>
+          ) : (
+            <Text size="2" color="gray">
+              –
+            </Text>
+          )}
+        </Flex>
+        <Count value={row.intervalRecords} />
+        <Count value={row.eventRecords} />
+        <Text size="2" align="right" style={{ fontVariantNumeric: "tabular-nums" }}>
+          {formatQuantity(row.quantity)} {unit}
         </Text>
-        <Badge color="gray" variant="soft" size="1">
-          {row.objectType}
-        </Badge>
-      </Flex>
-      <Flex minWidth="0">
-        {row.parentObjectId ? (
-          <StepIn
-            label={`Show what lies inside ${row.parentObjectId}`}
-            onClick={() => onStepInto(row.parentObjectId as string)}
-          >
-            {row.parentObjectId}
-          </StepIn>
-        ) : (
-          <Text size="2" color="gray">
-            –
-          </Text>
-        )}
-      </Flex>
-      <Flex justify="end">
-        {row.contains > 0 ? (
-          <StepIn
-            label={`Show the ${row.contains} objects inside ${row.objectId}`}
-            onClick={() => onStepInto(row.objectId)}
-          >
-            {formatCount(row.contains)}
-          </StepIn>
-        ) : (
-          <Text size="2" color="gray">
-            –
-          </Text>
-        )}
-      </Flex>
-      <Count value={row.intervalRecords} />
-      <Count value={row.eventRecords} />
-      <Text size="2" align="right" style={{ fontVariantNumeric: "tabular-nums" }}>
-        {formatQuantity(row.quantity)} {unit}
-      </Text>
-    </Grid>
+      </Grid>
+      {isOpen && <RecordList flowId={flowId} objectId={row.objectId} unit={unit} />}
+    </Box>
   );
 }
 
@@ -342,7 +386,10 @@ function StepIn({
         <button
           type="button"
           aria-label={label}
-          onClick={onClick}
+          onClick={(event) => {
+            event.stopPropagation();
+            onClick();
+          }}
           style={{
             all: "unset",
             cursor: "pointer",

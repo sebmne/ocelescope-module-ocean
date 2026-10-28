@@ -23,6 +23,7 @@ from ocelescope_module_socel.application.use_cases.get_flow_instances import Get
 from ocelescope_module_socel.application.use_cases.get_flow_inventory import (
     GetFlowInventory,
 )
+from ocelescope_module_socel.application.use_cases.get_flow_records import GetFlowRecords
 from ocelescope_module_socel.application.use_cases.get_log_classification import (
     GetLogClassification,
 )
@@ -113,6 +114,12 @@ def get_flow_instances(
     statistics: Annotated[SocelStatistics, Depends(get_socel_statistics)],
 ) -> GetFlowInstances:
     return GetFlowInstances(statistics=statistics)
+
+
+def get_flow_records(
+    statistics: Annotated[SocelStatistics, Depends(get_socel_statistics)],
+) -> GetFlowRecords:
+    return GetFlowRecords(statistics=statistics)
 
 
 def get_calculate_impact(socel: ApiSocel) -> CalculateImpact:

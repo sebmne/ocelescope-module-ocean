@@ -20,6 +20,7 @@ def test_the_module_offers_these_operations() -> None:
         ("GET", "/logs/{ocel_id}/class-counts", "getClassCounts"),
         ("GET", "/logs/{ocel_id}/flows", "getFlowInventory"),
         ("GET", "/logs/{ocel_id}/flows/{flow_id}/instances", "getFlowInstances"),
+        ("GET", "/logs/{ocel_id}/flows/{flow_id}/records", "getFlowRecords"),
         ("GET", "/logs/{ocel_id}/classification", "getLogClassification"),
         ("POST", "/logs/{ocel_id}/derivations", "buildSocel"),
         ("PATCH", "/logs/{ocel_id}/socel", "configureSocel"),

@@ -1,3 +1,6 @@
+from datetime import datetime
+from typing import Literal
+
 from ocelescope_module_socel.domain.models.base import Model
 
 
@@ -38,3 +41,17 @@ class FlowInstanceRow(Model):
     interval_records: int
     event_records: int
     quantity: float
+
+
+class FlowRecord(Model):
+    """A record of a flow at one object. An interval record spans start to end;
+    an event-linked record sits at its event: start is the event's timestamp,
+    and end the event's end where one is observed."""
+
+    record_id: str
+    kind: Literal["interval", "event"]
+    quantity: float
+    start: datetime
+    end: datetime | None
+    event_id: str | None
+    activity: str | None

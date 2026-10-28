@@ -52,6 +52,9 @@ class Api:
     def get_flow_instances(self, ocel_id: str, flow_id: str, **params: Any) -> Response:
         return self._client.get(f"/logs/{ocel_id}/flows/{flow_id}/instances", params=params)
 
+    def get_flow_records(self, ocel_id: str, flow_id: str, **params: Any) -> Response:
+        return self._client.get(f"/logs/{ocel_id}/flows/{flow_id}/records", params=params)
+
     def calculate_impact(
         self, ocel_id: str, factors: dict[str, dict[str, float]], period: str = "day"
     ) -> Response:

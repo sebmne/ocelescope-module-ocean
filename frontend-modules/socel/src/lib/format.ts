@@ -41,3 +41,16 @@ export function formatAmount(value: number) {
     ? value.toLocaleString(undefined, { maximumFractionDigits: 0 })
     : value.toLocaleString(undefined, { maximumSignificantDigits: 4 });
 }
+
+/** A UTC timestamp to the second, e.g. "14 Jul 2026, 08:00:12". */
+export function formatTimestamp(timestamp: string) {
+  return parseUtc(timestamp).toLocaleString(undefined, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    timeZone: "UTC",
+  });
+}
