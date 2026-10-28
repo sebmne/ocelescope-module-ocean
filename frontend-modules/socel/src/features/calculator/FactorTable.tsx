@@ -1,133 +1,153 @@
+
 import { ArrowDownToLineIcon, ArrowUpFromLineIcon } from "lucide-react";
-import type { ReactNode } from "react";
-import { Box, Flex, Grid, Text, TextField } from "../../components";
+import { Table } from "../../components";
+import { Box, Flex, Text, TextField } from "../../components";
 import { useFlowInventory } from "../../hooks/useFlowInventory";
 import { formatAmount } from "../../lib/format";
 import { parseFactor } from "./impact";
 import type { FactorEntry, Factors } from "./useFactors";
 import type { ImpactReport } from "./useImpact";
 
-const COLUMNS = "minmax(140px, 1fr) 300px 300px 100px";
-// Inside a direction column: the quantity, then its factor.
-const DIRECTION_COLUMNS = "96px minmax(0, 1fr)";
-
 type Direction = "inflow" | "outflow";
 
-// One row per flow: what flows into the objects and out of them, a factor for
-// each, and the impact they give.
+const DIRECTIONS: Direction[] = ["inflow", "outflow"];
+
+type Props = {
+  rows: ImpactReport["flows"];
+  total: number;
+  factors: Factors;
+  onChange: (flowId: string, entry: Partial<FactorEntry>) => void;
+};
+
 export default function FactorTable({
   rows,
   total,
   factors,
   onChange,
-}: {
-  rows: ImpactReport["flows"];
-  total: number;
-  factors: Factors;
-  onChange: (flowId: string, entry: Partial<FactorEntry>) => void;
-}) {
+}: Props) {
   const categories = new Map(
-    (useFlowInventory().data ?? []).map((flow) => [flow.flowId, flow.category]),
+    (useFlowInventory().data ?? []).map((flow) => [
+      flow.flowId,
+      flow.category,
+    ]),
   );
 
   return (
     <Box
-      role="table"
-      aria-label="Factors"
       style={{
+        overflowX: "auto",
         border: "1px solid var(--gray-a5)",
         borderRadius: "var(--radius-4)",
-        overflowX: "auto",
       }}
     >
-      <Box style={{ minWidth: 840 }}>
-        <Grid
-          role="row"
-          columns={COLUMNS}
-          gap="3"
-          px="3"
-          py="2"
-          style={{ background: "var(--gray-a2)" }}
-        >
-          <HeaderCell>Flow</HeaderCell>
-          <DirectionHeader icon={<ArrowDownToLineIcon size={14} aria-hidden />}>
-            Into objects
-          </DirectionHeader>
-          <DirectionHeader icon={<ArrowUpFromLineIcon size={14} aria-hidden />}>
-            Out of objects
-          </DirectionHeader>
-          <HeaderCell end>kg CO₂e</HeaderCell>
-        </Grid>
-        {rows.map((row) => {
-          const entry = factors[row.flowId];
-          const category = categories.get(row.flowId);
-          const factorCell = (direction: Direction, amount: number) => (
-            <DirectionCell
-              flowId={row.flowId}
-              direction={direction}
-              amount={amount}
-              unit={row.unit}
-              value={entry?.[direction] ?? ""}
-              onChange={(value) => onChange(row.flowId, { [direction]: value })}
-            />
-          );
-          return (
-            <Grid
-              key={row.flowId}
-              role="row"
-              columns={COLUMNS}
-              align="center"
-              gap="3"
-              px="3"
-              py="2"
-              style={{ borderTop: "1px solid var(--gray-a4)" }}
+      <Table.Root variant="surface" layout="auto" style={{ width: "100%" }}>
+        <Table.Header>
+
+          <Table.Row>
+            <Table.ColumnHeaderCell rowSpan={2}>
+              Flow
+            </Table.ColumnHeaderCell>
+
+            <Table.ColumnHeaderCell
+              colSpan={2}
+              justify="center"
+              style={{ boxShadow: "none" }}
             >
-              <Flex direction="column" minWidth="0">
-                <Text size="2" weight="medium" truncate>
-                  {row.flowId}
-                </Text>
-                {category && (
-                  <Text size="1" color="gray" truncate>
-                    {category}
-                  </Text>
-                )}
+              <Flex align="center" justify="center" gap="2">
+                <ArrowDownToLineIcon size={14} aria-hidden />
+                Into objects
               </Flex>
-              {factorCell("inflow", row.inflow)}
-              {factorCell("outflow", row.outflow)}
-              {row.impact === null ? (
-                <Text size="2" color="gray" align="right">
-                  –
-                </Text>
-              ) : (
-                <Amount value={row.impact} strong />
-              )}
-            </Grid>
-          );
-        })}
-        <Grid
-          role="row"
-          columns={COLUMNS}
-          align="center"
-          gap="3"
-          px="3"
-          py="2"
-          style={{ borderTop: "1px solid var(--gray-a5)", background: "var(--gray-a2)" }}
-        >
-          <Text size="2" weight="bold">
-            Total
-          </Text>
-          <span />
-          <span />
-          <Amount value={total} strong />
-        </Grid>
-      </Box>
+            </Table.ColumnHeaderCell>
+
+            <Table.ColumnHeaderCell
+              colSpan={2}
+              justify="center"
+              style={{ boxShadow: "none" }}
+            >
+              <Flex align="center" justify="center" gap="2">
+                <ArrowUpFromLineIcon size={14} aria-hidden />
+                Out of objects
+              </Flex>
+            </Table.ColumnHeaderCell>
+
+            <Table.ColumnHeaderCell rowSpan={2} justify="end">
+              kg CO₂e
+            </Table.ColumnHeaderCell>
+          </Table.Row>
+
+
+          <Table.Row>
+            <Table.ColumnHeaderCell justify="end">
+              Quantity
+            </Table.ColumnHeaderCell>
+            <Table.ColumnHeaderCell>
+              Factor
+            </Table.ColumnHeaderCell>
+            <Table.ColumnHeaderCell justify="end">
+              Quantity
+            </Table.ColumnHeaderCell>
+            <Table.ColumnHeaderCell>
+              Factor
+            </Table.ColumnHeaderCell>
+          </Table.Row>
+        </Table.Header>
+
+        <Table.Body>
+          {rows.map((row) => (
+            <Table.Row key={row.flowId}>
+              <Table.RowHeaderCell>
+                <Flex direction="column" gap="1">
+                  <Text size="2" weight="medium">
+                    {row.flowId}
+                  </Text>
+                  {categories.get(row.flowId) && (
+                    <Text size="1" color="gray">
+                      {categories.get(row.flowId)}
+                    </Text>
+                  )}
+                </Flex>
+              </Table.RowHeaderCell>
+
+              {DIRECTIONS.map((direction) => (
+                <DirectionCells
+                  key={direction}
+                  flowId={row.flowId}
+                  direction={direction}
+                  amount={row[direction]}
+                  unit={row.unit}
+                  value={factors[row.flowId]?.[direction] ?? ""}
+                  onChange={(value) =>
+                    onChange(row.flowId, { [direction]: value })
+                  }
+                />
+              ))}
+
+              <Table.Cell justify="end">
+                {row.impact === null ? (
+                  <Text size="2" color="gray">–</Text>
+                ) : (
+                  <Amount value={row.impact} strong />
+                )}
+              </Table.Cell>
+            </Table.Row>
+          ))}
+
+          <Table.Row style={{ background: "var(--gray-a2)" }}>
+            <Table.RowHeaderCell>
+              <Text weight="bold">Total</Text>
+            </Table.RowHeaderCell>
+            <Table.Cell colSpan={4} />
+            <Table.Cell justify="end">
+              <Amount value={total} strong />
+            </Table.Cell>
+          </Table.Row>
+        </Table.Body>
+      </Table.Root>
     </Box>
   );
 }
 
-// What flows in one direction, and its factor; a direction the flow never
-// takes has nothing to weigh.
-function DirectionCell({
+function DirectionCells({
   flowId,
   direction,
   amount,
@@ -144,76 +164,52 @@ function DirectionCell({
 }) {
   if (amount === 0) {
     return (
-      <Text size="2" color="gray">
-        –
-      </Text>
+      <>
+        <Table.Cell></Table.Cell>
+        <Table.Cell></Table.Cell>
+      </>
     );
   }
+
   return (
-    <Grid columns={DIRECTION_COLUMNS} align="center" gap="2">
-      <Amount value={amount} unit={unit} />
-      <TextField.Root
-        size="1"
-        inputMode="decimal"
-        aria-label={`Factor of ${flowId} ${direction === "inflow" ? "into" : "out of"} the objects`}
-        placeholder="–"
-        color={Number.isNaN(parseFactor(value)) ? "red" : undefined}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-      >
-        <TextField.Slot side="right">
-          <Text size="1" color="gray" wrap="nowrap">
-            kg CO₂e / {unit}
-          </Text>
-        </TextField.Slot>
-      </TextField.Root>
-    </Grid>
+    <>
+      <Table.Cell justify="end">
+        <Amount value={amount} unit={unit} />
+      </Table.Cell>
+
+      <Table.Cell>
+        <TextField.Root
+          size="1"
+          inputMode="decimal"
+          aria-label={`Factor of ${flowId} ${
+            direction === "inflow" ? "into" : "out of"
+          } the objects`}
+          placeholder="–"
+          color={Number.isNaN(parseFactor(value)) ? "red" : undefined}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          style={{ minWidth: "max-content" }}
+        >
+          <TextField.Slot side="right">
+            <Text size="1" color="gray" wrap="nowrap">
+              kg CO₂e / {unit}
+            </Text>
+          </TextField.Slot>
+        </TextField.Root>
+      </Table.Cell>
+    </>
   );
 }
 
-// A direction's heading, over the names of its two parts: the quantity and
-// the factor that weighs it.
-function DirectionHeader({ children, icon }: { children: ReactNode; icon: ReactNode }) {
-  return (
-    <Flex role="columnheader" direction="column" gap="1">
-      <Flex align="center" gap="2">
-        {icon}
-        <Text size="2" weight="bold">
-          {children}
-        </Text>
-      </Flex>
-      <Grid columns={DIRECTION_COLUMNS} gap="2">
-        <Text size="1" color="gray" align="right">
-          Quantity
-        </Text>
-        <Text size="1" color="gray">
-          Factor (kg CO₂e per unit)
-        </Text>
-      </Grid>
-    </Flex>
-  );
-}
-
-function HeaderCell({
-  children,
-  icon,
-  end,
+function Amount({
+  value,
+  unit,
+  strong,
 }: {
-  children: ReactNode;
-  icon?: ReactNode;
-  end?: boolean;
+  value: number;
+  unit?: string;
+  strong?: boolean;
 }) {
-  return (
-    <Flex role="columnheader" justify={end ? "end" : "start"} align="center" gap="2">
-      {icon}
-      <Text size="2" weight="bold">
-        {children}
-      </Text>
-    </Flex>
-  );
-}
-
-function Amount({ value, unit, strong }: { value: number; unit?: string; strong?: boolean }) {
   return (
     <Text
       size="2"

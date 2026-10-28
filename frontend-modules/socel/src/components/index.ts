@@ -24,6 +24,7 @@ export {
   Text,
   TextField,
   Tooltip,
+  Table
 } from "@r4pm/components/ui";
 export { type BarNode, default as BarTree } from "./BarTree";
 export { default as ClassSelect } from "./ClassSelect";
