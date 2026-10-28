@@ -8,6 +8,8 @@ import type { FactorEntry, Factors } from "./useFactors";
 import type { ImpactReport } from "./useImpact";
 
 const COLUMNS = "minmax(140px, 1fr) 300px 300px 100px";
+// Inside a direction column: the quantity, then its factor.
+const DIRECTION_COLUMNS = "96px minmax(0, 1fr)";
 
 type Direction = "inflow" | "outflow";
 
@@ -42,17 +44,18 @@ export default function FactorTable({
         <Grid
           role="row"
           columns={COLUMNS}
-          align="center"
           gap="3"
           px="3"
           py="2"
           style={{ background: "var(--gray-a2)" }}
         >
           <HeaderCell>Flow</HeaderCell>
-          <HeaderCell icon={<ArrowDownToLineIcon size={14} aria-hidden />}>Into objects</HeaderCell>
-          <HeaderCell icon={<ArrowUpFromLineIcon size={14} aria-hidden />}>
+          <DirectionHeader icon={<ArrowDownToLineIcon size={14} aria-hidden />}>
+            Into objects
+          </DirectionHeader>
+          <DirectionHeader icon={<ArrowUpFromLineIcon size={14} aria-hidden />}>
             Out of objects
-          </HeaderCell>
+          </DirectionHeader>
           <HeaderCell end>kg CO₂e</HeaderCell>
         </Grid>
         {rows.map((row) => {
@@ -147,7 +150,7 @@ function DirectionCell({
     );
   }
   return (
-    <Grid columns="96px minmax(0, 1fr)" align="center" gap="2">
+    <Grid columns={DIRECTION_COLUMNS} align="center" gap="2">
       <Amount value={amount} unit={unit} />
       <TextField.Root
         size="1"
@@ -165,6 +168,29 @@ function DirectionCell({
         </TextField.Slot>
       </TextField.Root>
     </Grid>
+  );
+}
+
+// A direction's heading, over the names of its two parts: the quantity and
+// the factor that weighs it.
+function DirectionHeader({ children, icon }: { children: ReactNode; icon: ReactNode }) {
+  return (
+    <Flex role="columnheader" direction="column" gap="1">
+      <Flex align="center" gap="2">
+        {icon}
+        <Text size="2" weight="bold">
+          {children}
+        </Text>
+      </Flex>
+      <Grid columns={DIRECTION_COLUMNS} gap="2">
+        <Text size="1" color="gray" align="right">
+          Quantity
+        </Text>
+        <Text size="1" color="gray">
+          Factor (kg CO₂e per unit)
+        </Text>
+      </Grid>
+    </Flex>
   );
 }
 
