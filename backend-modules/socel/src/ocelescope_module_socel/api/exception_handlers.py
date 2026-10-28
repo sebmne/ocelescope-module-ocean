@@ -8,17 +8,22 @@ from fastapi.responses import JSONResponse
 from ocelescope_module_socel.application.errors import FlowNotFound
 from ocelescope_module_socel.domain.exceptions import SocelBuildError
 
+# A handler also catches the subclasses of its error, so SocelBuildError
+# covers every domain error.
+_STATUS: dict[type[Exception], int] = {
+    FlowNotFound: 404,
+    SocelBuildError: 422,
+}
+
 
 def register_exception_handlers(app: FastAPI) -> None:
     """Maps the module's own errors to HTTP statuses."""
+    for error_type, status in _STATUS.items():
 
-    @app.exception_handler(FlowNotFound)
-    def _(request: Request, error: FlowNotFound) -> JSONResponse:
-        return JSONResponse(status_code=404, content={"detail": str(error)})
+        def handle(request: Request, error: Exception, status: int = status) -> JSONResponse:
+            return JSONResponse(status_code=status, content={"detail": str(error)})
 
-    @app.exception_handler(SocelBuildError)
-    def _(request: Request, error: SocelBuildError) -> JSONResponse:
-        return JSONResponse(status_code=422, content={"detail": str(error)})
+        app.add_exception_handler(error_type, handle)
 
     @app.exception_handler(RequestValidationError)
     def _(request: Request, error: RequestValidationError) -> JSONResponse:
