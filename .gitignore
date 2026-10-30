@@ -25,3 +25,4 @@ tsconfig.tsbuildinfo
 # The large example (run `uv run python scripts/large_example.py`)
 data/event_logs/large_plant*.db
 data/flow_records/large_plant_records.csv
+.pnpm-store/

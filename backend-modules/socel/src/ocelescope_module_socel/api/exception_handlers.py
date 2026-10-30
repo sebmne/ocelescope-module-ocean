@@ -5,13 +5,27 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from ocelescope_module_socel.application.errors import FlowNotFound
+from ocelescope_module_socel.application.errors import (
+    CatalogFactorNotFound,
+    CatalogKeyFromEnvironment,
+    CatalogKeyRefused,
+    FactorCatalogUnavailable,
+    FlowNotFound,
+    IncompatibleUnit,
+    UnknownFactorCatalog,
+)
 from ocelescope_module_socel.domain.exceptions import SocelBuildError
 
 # A handler also catches the subclasses of its error, so SocelBuildError
 # covers every domain error.
 _STATUS: dict[type[Exception], int] = {
     FlowNotFound: 404,
+    CatalogFactorNotFound: 404,
+    UnknownFactorCatalog: 404,
+    IncompatibleUnit: 422,
+    CatalogKeyRefused: 422,
+    CatalogKeyFromEnvironment: 409,
+    FactorCatalogUnavailable: 503,
     SocelBuildError: 422,
 }
 

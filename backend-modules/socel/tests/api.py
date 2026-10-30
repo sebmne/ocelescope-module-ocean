@@ -16,6 +16,23 @@ class Api:
     def get_class_taxonomies(self) -> Response:
         return self._client.get("/taxonomy")
 
+    def list_factor_catalogs(self) -> Response:
+        return self._client.get("/factor-catalogs")
+
+    def connect_factor_catalog(self, catalog: str, key: str) -> Response:
+        return self._client.put(f"/factor-catalogs/{catalog}/key", json={"key": key})
+
+    def disconnect_factor_catalog(self, catalog: str) -> Response:
+        return self._client.delete(f"/factor-catalogs/{catalog}/key")
+
+    def search_factor_catalog(self, catalog: str, text: str, **params: Any) -> Response:
+        return self._client.get(
+            f"/factor-catalogs/{catalog}/factors", params={"text": text, **params}
+        )
+
+    def resolve_catalog_factor(self, catalog: str, ref: str, unit: str) -> Response:
+        return self._client.get(f"/factor-catalogs/{catalog}/factors/{ref}", params={"unit": unit})
+
     def get_log_classification(self, ocel_id: str, *, original: bool = False) -> Response:
         return self._client.get(
             f"/logs/{ocel_id}/classification",

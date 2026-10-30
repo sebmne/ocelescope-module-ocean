@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "sOCEL: sustainability analysis of object-centric event logs for Ocelescope"
 requires-python = ">=3.13"
 dependencies = [
+  "httpx>=0.28",
   "ocelescope-backend>=0.10.1,<0.11.0",
   "pydantic>=2.11",
 ]

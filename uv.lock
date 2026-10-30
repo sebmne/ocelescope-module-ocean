@@ -1039,12 +1039,14 @@ name = "ocelescope-module-socel"
 version = "0.1.0"
 source = { editable = "backend-modules/socel" }
 dependencies = [
+    { name = "httpx" },
     { name = "ocelescope-backend" },
     { name = "pydantic" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "httpx", specifier = ">=0.28" },
     { name = "ocelescope-backend", git = "https://github.com/promi4s/ocelescope?subdirectory=src%2Fbackend%2Focelescope-backend&rev=329e57c0089703d1738761eaa7040d412dbbdd41" },
     { name = "pydantic", specifier = ">=2.11" },
 ]

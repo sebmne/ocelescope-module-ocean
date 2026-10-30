@@ -16,6 +16,11 @@ def test_the_module_offers_these_operations() -> None:
 
     assert operations == {
         ("GET", "/taxonomy", "getClassTaxonomies"),
+        ("GET", "/factor-catalogs", "listFactorCatalogs"),
+        ("PUT", "/factor-catalogs/{catalog}/key", "connectFactorCatalog"),
+        ("DELETE", "/factor-catalogs/{catalog}/key", "disconnectFactorCatalog"),
+        ("GET", "/factor-catalogs/{catalog}/factors", "searchFactorCatalog"),
+        ("GET", "/factor-catalogs/{catalog}/factors/{ref}", "resolveCatalogFactor"),
         ("GET", "/logs/{ocel_id}/summary", "getSocelStatus"),
         ("GET", "/logs/{ocel_id}/class-counts", "getClassCounts"),
         ("GET", "/logs/{ocel_id}/flows", "getFlowInventory"),

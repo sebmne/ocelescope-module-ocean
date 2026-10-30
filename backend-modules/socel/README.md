@@ -28,6 +28,7 @@ src/ocelescope_module_socel/
 │   └── use_cases/           Entry operations + dataclass commands
 ├── infrastructure/
 │   ├── adapters/            <technology>_<port>.py, including host workspaces
+│   │   └── factor_catalogs/ Factor catalog providers, their factory and key file
 │   ├── conformance/         V1–V10, prerequisite handling, aggregated diagnostics
 │   ├── ocelescope_extension.py  Thin OCEL subtype recognized by the host
 │   └── schema.py            Stored extension table/column definitions
@@ -42,7 +43,8 @@ src/ocelescope_module_socel/
 
 ## HTTP resources
 
-`api/router.py` composes log resources under `/logs/{ocel_id}` once. Endpoint
+`api/router.py` composes log resources under `/logs/{ocel_id}` once; other
+endpoints (`/taxonomy`, `/factor-catalogs`) give their full path. Endpoint
 files contain one operation and use shared models directly. Operation IDs stay
 stable so generated hook names are unchanged.
 
@@ -54,11 +56,17 @@ stable so generated hook names are unchanged.
 | GET `/logs/{ocel_id}/classification` | Current classes by activity/object type |
 | GET `/logs/{ocel_id}/flows` | Flow inventory |
 | GET `/logs/{ocel_id}/flows/{flow_id}/instances` | Shared page of domain items plus containment path |
+| GET `/logs/{ocel_id}/flows/{flow_id}/records?object_id=` | Page of the object's records, earliest first, with event and activity for event-linked ones |
 | POST `/logs/{ocel_id}/derivations` | `201`, new log identity and a readable `Location` |
 | PATCH `/logs/{ocel_id}/socel` | `204`, apply partial configuration to the original log |
 | POST `/logs/{ocel_id}/record-uploads` | `201`, uploaded file identity and metadata |
 | POST `/logs/{ocel_id}/record-uploads/{upload_id}/preview` | Completed preview |
 | POST `/logs/{ocel_id}/impact` | Completed impact report |
+| GET `/factor-catalogs` | Catalogs on offer, each with whether it has a key and where it comes from |
+| PUT `/factor-catalogs/{catalog}/key` | Checks the key with the catalog, then keeps it; `422` if refused, `409` if set in `.env` |
+| DELETE `/factor-catalogs/{catalog}/key` | `204`, forgets the saved key; `409` if set in `.env` |
+| GET `/factor-catalogs/{catalog}/factors?text=` | Page of factors as the catalog lists them (optional `unit`, `region`, `year`) |
+| GET `/factor-catalogs/{catalog}/factors/{ref}?unit=` | The factor in kg CO2e per one unit of a flow, with the listed factor |
 
 Pages contain `items`, `total`, `offset`, and `limit`; instance pages also carry
 `path` breadcrumbs. A page beyond the end keeps the filtered total. A missing
@@ -66,6 +74,30 @@ flow returns `404`; a valid flow with no matches returns an empty page.
 Pagination defaults to 50 and accepts 1–200 items. The frontend requests 25
 items for its instance table. Build still receives the selected view through
 `ApiOcel`; configuring an existing log always uses its complete original view.
+
+## Factor catalogs
+
+External databases of emission factors (Climatiq for now) are consulted while a
+flow's factors are chosen. The application sees three ports:
+
+- `FactorCatalogFactory` offers the catalogs by id and creates one for a key.
+  `infrastructure/adapters/factor_catalogs/factory.py` is its one implementation:
+  it lists the offers and creates each catalog in a `match`.
+- `FactorCatalog` is what a created catalog fulfils: `check` (is the key
+  accepted?), `search`, and `factor` (converted to one unit of a flow). Creating
+  asks nothing of the catalog, so connecting a key runs `check` before saving it.
+- `CatalogCredentials` keeps a key per catalog. A key from the environment
+  (`CLIMATIQ_API_KEY`) comes first and cannot be changed from the app; a key
+  saved from the app is kept in `DATA_DIR/socel/factor_catalogs.json`, or
+  `~/.ocelescope/socel/` without `DATA_DIR`, readable by the user alone.
+
+The use cases hold the rules (unknown catalog, no key, environment keys); the
+`OpenFactorCatalog` workflow opens a catalog with its key for search and resolve.
+
+To offer another catalog, write an adapter that fulfils `FactorCatalog` next to
+`climatiq.py`, with its own tests against a stand-in for its API, and add it to
+the factory's offers and `create`. Nothing outside that folder changes, unless
+the catalog needs other connection settings than a key.
 
 ## The sOCEL extension
 
@@ -162,7 +194,10 @@ its own in the repository's `legacy/` folder (see its README).
   accumulating independent issues and skipping checks with failed prerequisites.
 - Ports describe external capabilities using structural protocols. Adapters do
   not inherit them. All ports live in `application/ports/`. Adapters live under
-  `infrastructure/adapters/` using the technology/port naming convention.
+  `infrastructure/adapters/` using the technology/port naming convention. The
+  factor catalogs are the one exception: their providers, the factory creating
+  them, and the key file share `adapters/factor_catalogs/`, where the folder
+  names the port and each module its technology.
 - Routes get assembled use cases from `api/dependencies.py` and reuse domain
   models directly. `api/models/pagination.py` owns `Pagination` and `Page[T]`;
   its shared policy limits HTTP pages to 200 items. Items are domain models.
