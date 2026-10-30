@@ -1,9 +1,7 @@
 """Composition root: the only place that knows which adapter implements which port."""
 
-import os
 from collections.abc import Generator, Iterator
 from functools import cache
-from pathlib import Path
 from threading import Lock
 from typing import Annotated
 
@@ -64,6 +62,9 @@ from ocelescope_module_socel.infrastructure.adapters.duckdb_record_importer impo
 from ocelescope_module_socel.infrastructure.adapters.duckdb_socel_statistics import (
     DuckDbSocelStatistics,
 )
+from ocelescope_module_socel.infrastructure.adapters.factor_catalogs.climatiq import (
+    ClimatiqConnector,
+)
 from ocelescope_module_socel.infrastructure.adapters.factor_catalogs.factory import (
     ExternalFactorCatalogFactory,
 )
@@ -77,6 +78,7 @@ from ocelescope_module_socel.infrastructure.adapters.ocelescope_upload_store imp
     OcelescopeUploadStore,
 )
 from ocelescope_module_socel.infrastructure.ocelescope_extension import SOCEL
+from ocelescope_module_socel.infrastructure.settings import SocelSettings
 
 _VALIDATED = "socel:validated"
 
@@ -228,28 +230,35 @@ def get_build_socel(
     return BuildSocel(apply=apply, workspace=OcelescopeSocelWorkspace(session, ocel))
 
 
-def _settings_dir() -> Path:
-    """Where the module keeps settings across restarts. The host keeps none of
-    its own: DATA_DIR where the deployment provides one (the Docker volume),
-    else the user's home."""
-    return Path(os.environ.get("DATA_DIR") or Path.home() / ".ocelescope") / "socel"
+@cache
+def get_settings() -> SocelSettings:
+    """The module's configuration, read once."""
+    return SocelSettings()
 
 
-def get_catalog_credentials() -> CatalogCredentials:
+type ApiSettings = Annotated[SocelSettings, Depends(get_settings)]
+
+
+def get_catalog_credentials(settings: ApiSettings) -> CatalogCredentials:
+    key = settings.climatiq_api_key
     return FileCatalogCredentials(
-        _settings_dir() / "factor_catalogs.json",
-        environment={"climatiq": os.environ.get("CLIMATIQ_API_KEY")},
+        settings.module_dir / "factor_catalogs.json",
+        environment={"climatiq": key.get_secret_value() if key is not None else None},
     )
 
 
-def get_factor_catalog_factory() -> FactorCatalogFactory:
-    return _factor_catalog_factory(os.environ.get("CLIMATIQ_DATA_VERSION", "").strip() or None)
+def get_factor_catalog_factory(settings: ApiSettings) -> FactorCatalogFactory:
+    return _factor_catalog_factory(settings.climatiq_data_version)
 
 
 @cache
 def _factor_catalog_factory(climatiq_data_version: str | None) -> ExternalFactorCatalogFactory:
-    # One factory per configuration: the catalogs it opened serve the next requests.
-    return ExternalFactorCatalogFactory(climatiq_data_version=climatiq_data_version)
+    # The catalogs on offer, in the order they are shown; each knows its own id,
+    # name and website. One factory per configuration: the catalogs its
+    # providers opened serve the next requests.
+    return ExternalFactorCatalogFactory(
+        [ClimatiqConnector(data_version=climatiq_data_version)],
+    )
 
 
 type ApiFactorCatalogFactory = Annotated[FactorCatalogFactory, Depends(get_factor_catalog_factory)]

@@ -1,7 +1,7 @@
 """Climatiq's emission factors (https://www.climatiq.io), through its data API."""
 
 from threading import Lock
-from typing import Any
+from typing import Any, ClassVar
 
 import httpx
 
@@ -11,7 +11,7 @@ from ocelescope_module_socel.application.errors import (
     FactorCatalogUnavailable,
     IncompatibleUnit,
 )
-from ocelescope_module_socel.application.ports.factor_catalog import FactorSlice
+from ocelescope_module_socel.application.ports.factor_catalog import CatalogOffer, FactorSlice
 from ocelescope_module_socel.domain.models.factor_catalog import (
     CatalogFactor,
     FactorQuery,
@@ -21,7 +21,6 @@ from ocelescope_module_socel.infrastructure.adapters.factor_catalogs.climatiq_un
     climatiq_unit,
 )
 
-NAME = "Climatiq"
 BASE_URL = "https://api.climatiq.io"
 _TIMEOUT = httpx.Timeout(15.0, connect=5.0)
 # An estimate's co2e, in kg per unit it may be given in.
@@ -36,6 +35,13 @@ class ClimatiqFactorCatalog:
     `data_version` is Climatiq's: a fixed release ("38"), or the latest within
     one ("^38"). Without it, the latest release is asked for once and followed.
     """
+
+    # What the module offers Climatiq as: its id, the name users see, and its
+    # website. Written here only; the connector, the factory and the messages
+    # below read it.
+    offer: ClassVar[CatalogOffer] = CatalogOffer(
+        id="climatiq", name="Climatiq", website="https://www.climatiq.io"
+    )
 
     def __init__(self, client: httpx.Client, *, data_version: str | None = None) -> None:
         self._client = client
@@ -55,7 +61,7 @@ class ClimatiqFactorCatalog:
         try:
             self._get("/data/v1/search", {"data_version": self._version(), "results_per_page": 1})
         except _KeyRefused as error:
-            raise CatalogKeyRefused(NAME) from error
+            raise CatalogKeyRefused(self.offer.name) from error
 
     def search(self, query: FactorQuery, *, offset: int, limit: int) -> FactorSlice:
         params: dict[str, Any] = {
@@ -113,7 +119,7 @@ class ClimatiqFactorCatalog:
         per_kg = _KG.get(str(estimate.get("co2e_unit", "kg")))
         if per_kg is None:
             raise FactorCatalogUnavailable(
-                f"Climatiq answered in an unknown unit, {estimate.get('co2e_unit')!r}."
+                f"{self.offer.name} answered in an unknown unit, {estimate.get('co2e_unit')!r}."
             )
         return ResolvedFactor(
             unit=unit,
@@ -135,7 +141,9 @@ class ClimatiqFactorCatalog:
         try:
             return self._client.request(method, path, **kwargs)
         except httpx.HTTPError as error:
-            raise FactorCatalogUnavailable(f"Climatiq cannot be reached: {error}") from error
+            raise FactorCatalogUnavailable(
+                f"{self.offer.name} cannot be reached: {error}"
+            ) from error
 
 
 def _body(response: httpx.Response) -> dict[str, Any]:
@@ -143,14 +151,15 @@ def _body(response: httpx.Response) -> dict[str, Any]:
     if response.is_success:
         return response.json()
     message = _error(response).get("message") or response.reason_phrase
+    name = ClimatiqFactorCatalog.offer.name
     if response.status_code in (401, 403):
-        raise _KeyRefused(f"Climatiq refused the API key: {message}")
+        raise _KeyRefused(f"{name} refused the API key: {message}")
     if response.status_code == 429:
-        reason = "Climatiq's quota or rate limit is reached"
+        reason = f"{name}'s quota or rate limit is reached"
     elif response.status_code >= 500:
-        reason = "Climatiq cannot answer right now"
+        reason = f"{name} cannot answer right now"
     else:
-        reason = "Climatiq refused the request"
+        reason = f"{name} refused the request"
     raise FactorCatalogUnavailable(f"{reason}: {message}")
 
 
@@ -191,6 +200,8 @@ def _per(unit: str) -> str:
 class ClimatiqConnector:
     """Opens Climatiq with a key, and keeps it open for the key last used: its
     connections and the data version it looked up serve the next requests."""
+
+    offer: ClassVar[CatalogOffer] = ClimatiqFactorCatalog.offer
 
     def __init__(self, *, data_version: str | None = None) -> None:
         self._data_version = data_version

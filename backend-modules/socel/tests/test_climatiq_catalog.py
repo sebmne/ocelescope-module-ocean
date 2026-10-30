@@ -3,7 +3,6 @@ answers as Climatiq documents it."""
 
 import json
 import re
-from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -17,7 +16,6 @@ from ocelescope_module_socel.application.errors import (
     FactorCatalogNotConnected,
     FactorCatalogUnavailable,
     IncompatibleUnit,
-    UnknownFactorCatalog,
 )
 from ocelescope_module_socel.application.ports.factor_catalog import CatalogOffer
 from ocelescope_module_socel.application.use_cases.list_factor_catalogs import (
@@ -28,9 +26,7 @@ from ocelescope_module_socel.infrastructure.adapters.factor_catalogs.climatiq im
     ClimatiqConnector,
     ClimatiqFactorCatalog,
 )
-from ocelescope_module_socel.infrastructure.adapters.factor_catalogs.factory import (
-    ExternalFactorCatalogFactory,
-)
+from ocelescope_module_socel.infrastructure.settings import SocelSettings
 
 GRID: dict[str, Any] = {
     "id": "f3a6-grid",
@@ -338,66 +334,55 @@ def test_the_connector_keeps_the_catalog_of_the_key_last_used() -> None:
     assert connector.connect("two") is not first
 
 
-def test_the_factory_offers_climatiq() -> None:
-    factory = ExternalFactorCatalogFactory()
-
-    assert factory.offered() == (CatalogOffer("climatiq", "Climatiq"),)
-    assert factory.offer("climatiq").name == "Climatiq"
-    assert isinstance(factory.create("climatiq", "secret"), ClimatiqFactorCatalog)
-
-
-@pytest.mark.parametrize("make", [lambda f: f.offer("nowhere"), lambda f: f.create("nowhere", "k")])
-def test_the_factory_knows_no_other_catalog(
-    make: Callable[[ExternalFactorCatalogFactory], object],
-) -> None:
-    with pytest.raises(UnknownFactorCatalog):
-        make(ExternalFactorCatalogFactory())
+def test_climatiq_is_offered_as_its_adapter_declares() -> None:
+    assert ClimatiqConnector.offer is ClimatiqFactorCatalog.offer
+    assert ClimatiqFactorCatalog.offer == CatalogOffer(
+        id="climatiq", name="Climatiq", website="https://www.climatiq.io"
+    )
 
 
-def test_climatiq_is_on_offer(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    monkeypatch.setenv("DATA_DIR", str(tmp_path))
-    monkeypatch.delenv("CLIMATIQ_API_KEY", raising=False)
+def settings(tmp_path: Path, **values: str) -> SocelSettings:
+    """Settings as the installation gives them, with no .env file read."""
+    # pyright does not know BaseSettings' `_env_file`.
+    return SocelSettings(_env_file=None, data_dir=tmp_path, **values)  # pyright: ignore[reportCallIssue]
+
+
+def test_climatiq_is_on_offer(tmp_path: Path) -> None:
+    given = settings(tmp_path)
 
     infos = dependencies.get_list_factor_catalogs(
-        dependencies.get_factor_catalog_factory(), dependencies.get_catalog_credentials()
+        dependencies.get_factor_catalog_factory(given), dependencies.get_catalog_credentials(given)
     ).execute(ListFactorCatalogsCommand())
 
     assert [info.model_dump() for info in infos] == [
-        {"id": "climatiq", "name": "Climatiq", "available": False, "key": None}
+        {
+            "id": "climatiq",
+            "name": "Climatiq",
+            "website": "https://www.climatiq.io",
+            "available": False,
+            "key": None,
+        }
     ]
 
 
-def open_climatiq() -> object:
+def open_climatiq(given: SocelSettings) -> object:
     return dependencies.get_open_factor_catalog(
-        dependencies.get_factor_catalog_factory(), dependencies.get_catalog_credentials()
+        dependencies.get_factor_catalog_factory(given), dependencies.get_catalog_credentials(given)
     ).open("climatiq")
 
 
-def test_a_key_in_the_environment_opens_climatiq(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
-    monkeypatch.setenv("DATA_DIR", str(tmp_path))
-    monkeypatch.setenv("CLIMATIQ_API_KEY", "secret")
+def test_a_key_set_for_the_installation_opens_climatiq(tmp_path: Path) -> None:
+    given = settings(tmp_path, climatiq_api_key="secret")
 
-    assert isinstance(open_climatiq(), ClimatiqFactorCatalog)
+    assert isinstance(open_climatiq(given), ClimatiqFactorCatalog)
 
 
-def test_without_a_key_climatiq_stays_closed(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
-    monkeypatch.setenv("DATA_DIR", str(tmp_path))
-    monkeypatch.setenv("CLIMATIQ_API_KEY", "  ")
-
+def test_without_a_key_climatiq_stays_closed(tmp_path: Path) -> None:
     with pytest.raises(FactorCatalogNotConnected):
-        open_climatiq()
+        open_climatiq(settings(tmp_path))
 
 
-def test_a_saved_key_is_kept_in_the_data_folder(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
-    monkeypatch.setenv("DATA_DIR", str(tmp_path))
-    monkeypatch.delenv("CLIMATIQ_API_KEY", raising=False)
-
-    dependencies.get_catalog_credentials().save("climatiq", "secret")
+def test_a_saved_key_is_kept_in_the_data_folder(tmp_path: Path) -> None:
+    dependencies.get_catalog_credentials(settings(tmp_path)).save("climatiq", "secret")
 
     assert (tmp_path / "socel" / "factor_catalogs.json").exists()

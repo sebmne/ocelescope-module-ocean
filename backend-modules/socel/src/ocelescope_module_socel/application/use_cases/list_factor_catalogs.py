@@ -34,6 +34,7 @@ def catalog_info(offer: CatalogOffer, key: CatalogKey | None) -> FactorCatalogIn
     return FactorCatalogInfo(
         id=offer.id,
         name=offer.name,
+        website=offer.website,
         available=key is not None,
         key=key.source if key is not None else None,
     )

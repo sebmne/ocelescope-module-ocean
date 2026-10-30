@@ -45,10 +45,12 @@ class FactorCatalog(Protocol):
 
 @dataclass(frozen=True)
 class CatalogOffer:
-    """A factor catalog on offer: its id and its name as the user knows it."""
+    """A factor catalog on offer: its id, its name as the user knows it, and
+    its website, where a user signs up for a key."""
 
     id: str
     name: str
+    website: str
 
 
 class FactorCatalogFactory(Protocol):

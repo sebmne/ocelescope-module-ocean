@@ -26,3 +26,6 @@ tsconfig.tsbuildinfo
 data/event_logs/large_plant*.db
 data/flow_records/large_plant_records.csv
 .pnpm-store/
+
+# Keys for external factor catalogs, saved from the app when DATA_DIR is data/
+data/socel/

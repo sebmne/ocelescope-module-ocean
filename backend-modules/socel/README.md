@@ -31,7 +31,8 @@ src/ocelescope_module_socel/
 │   │   └── factor_catalogs/ Factor catalog providers, their factory and key file
 │   ├── conformance/         V1–V10, prerequisite handling, aggregated diagnostics
 │   ├── ocelescope_extension.py  Thin OCEL subtype recognized by the host
-│   └── schema.py            Stored extension table/column definitions
+│   ├── schema.py            Stored extension table/column definitions
+│   └── settings.py          Configuration from the environment and .env, read once
 └── api/
     ├── dependencies.py      Request context and concrete use-case assembly
     ├── router.py
@@ -62,7 +63,7 @@ stable so generated hook names are unchanged.
 | POST `/logs/{ocel_id}/record-uploads` | `201`, uploaded file identity and metadata |
 | POST `/logs/{ocel_id}/record-uploads/{upload_id}/preview` | Completed preview |
 | POST `/logs/{ocel_id}/impact` | Completed impact report |
-| GET `/factor-catalogs` | Catalogs on offer, each with whether it has a key and where it comes from |
+| GET `/factor-catalogs` | Catalogs on offer, each with its website, whether it has a key and where it comes from |
 | PUT `/factor-catalogs/{catalog}/key` | Checks the key with the catalog, then keeps it; `422` if refused, `409` if set in `.env` |
 | DELETE `/factor-catalogs/{catalog}/key` | `204`, forgets the saved key; `409` if set in `.env` |
 | GET `/factor-catalogs/{catalog}/factors?text=` | Page of factors as the catalog lists them (optional `unit`, `region`, `year`) |
@@ -81,8 +82,9 @@ External databases of emission factors (Climatiq for now) are consulted while a
 flow's factors are chosen. The application sees three ports:
 
 - `FactorCatalogFactory` offers the catalogs by id and creates one for a key.
-  `infrastructure/adapters/factor_catalogs/factory.py` is its one implementation:
-  it lists the offers and creates each catalog in a `match`.
+  `infrastructure/adapters/factor_catalogs/factory.py` is its one implementation.
+  It knows no catalog itself: it is given providers, each with an `offer`
+  (id, name users see, website) and `connect(key)`, and offers them in order.
 - `FactorCatalog` is what a created catalog fulfils: `check` (is the key
   accepted?), `search`, and `factor` (converted to one unit of a flow). Creating
   asks nothing of the catalog, so connecting a key runs `check` before saving it.
@@ -91,13 +93,21 @@ flow's factors are chosen. The application sees three ports:
   saved from the app is kept in `DATA_DIR/socel/factor_catalogs.json`, or
   `~/.ocelescope/socel/` without `DATA_DIR`, readable by the user alone.
 
+The environment is read in one place: `SocelSettings` (`infrastructure/settings.py`,
+pydantic-settings) reads `DATA_DIR`, `CLIMATIQ_API_KEY` and
+`CLIMATIQ_DATA_VERSION` from the environment and `.env` once, through
+`get_settings()` in `api/dependencies.py`. Nothing else reads environment variables.
+
 The use cases hold the rules (unknown catalog, no key, environment keys); the
 `OpenFactorCatalog` workflow opens a catalog with its key for search and resolve.
 
-To offer another catalog, write an adapter that fulfils `FactorCatalog` next to
-`climatiq.py`, with its own tests against a stand-in for its API, and add it to
-the factory's offers and `create`. Nothing outside that folder changes, unless
-the catalog needs other connection settings than a key.
+A catalog's id, name and website are written once, as the `offer` class
+variable of its adapter (`ClimatiqFactorCatalog.offer`); its provider
+(`ClimatiqConnector`) offers that same value. To offer another catalog, write an
+adapter that fulfils `FactorCatalog` next to `climatiq.py`, with its `offer` and
+a provider, test it against a stand-in for its API, and add the provider to the
+list in `api/dependencies.py`. Nothing else changes, unless the catalog needs
+other connection settings than a key.
 
 ## The sOCEL extension
 

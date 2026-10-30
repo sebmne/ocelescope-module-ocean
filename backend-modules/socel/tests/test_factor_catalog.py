@@ -82,7 +82,10 @@ class FakeFactory:
 
     def __init__(self, catalog: FakeCatalog) -> None:
         self.catalogs = {"fake": catalog, "other": FakeCatalog()}
-        self.offers = (CatalogOffer("fake", "Fake"), CatalogOffer("other", "Other"))
+        self.offers = (
+            CatalogOffer("fake", "Fake", "https://fake.example"),
+            CatalogOffer("other", "Other", "https://other.example"),
+        )
 
     def offered(self) -> tuple[CatalogOffer, ...]:
         return self.offers
@@ -142,8 +145,20 @@ def catalog_api(catalog: FakeCatalog, credentials: MemoryCredentials) -> Iterato
 
 def test_every_catalog_is_listed_with_its_key(catalog_api: Api) -> None:
     assert catalog_api.list_factor_catalogs().json() == [
-        {"id": "fake", "name": "Fake", "available": True, "key": "saved"},
-        {"id": "other", "name": "Other", "available": False, "key": None},
+        {
+            "id": "fake",
+            "name": "Fake",
+            "website": "https://fake.example",
+            "available": True,
+            "key": "saved",
+        },
+        {
+            "id": "other",
+            "name": "Other",
+            "website": "https://other.example",
+            "available": False,
+            "key": None,
+        },
     ]
 
 
@@ -190,7 +205,13 @@ def test_an_accepted_key_is_saved(catalog_api: Api, credentials: MemoryCredentia
     response = catalog_api.connect_factor_catalog("fake", f"  {GOOD_KEY} ")
 
     assert response.status_code == 200
-    assert response.json() == {"id": "fake", "name": "Fake", "available": True, "key": "saved"}
+    assert response.json() == {
+        "id": "fake",
+        "name": "Fake",
+        "website": "https://fake.example",
+        "available": True,
+        "key": "saved",
+    }
     assert credentials.saved == {"fake": GOOD_KEY}
 
 

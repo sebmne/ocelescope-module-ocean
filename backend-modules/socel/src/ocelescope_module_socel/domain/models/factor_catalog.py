@@ -10,12 +10,13 @@ type KeySource = Literal["environment", "saved"]
 
 
 class FactorCatalogInfo(Model):
-    """An external database of emission factors the module can consult: its id
-    and name, whether it can be consulted, and where its key comes from (None:
-    there is none)."""
+    """An external database of emission factors the module can consult: its id,
+    name and website, whether it can be consulted, and where its key comes from
+    (None: there is none)."""
 
     id: str
     name: str
+    website: str
     available: bool
     key: KeySource | None
 
